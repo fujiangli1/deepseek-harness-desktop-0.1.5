@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // Upstream 0.1.2+ gates the Web GUI behind a per-process launch token that is
@@ -82,6 +83,24 @@ export function buildDshCommand({
     : { command: electronExecutable, args }
 }
 
+// Windows resolves a bare `powershell.exe` through PATH, and some installations
+// carry no system directories on PATH at all. Any plugin that spawns one then
+// dies with ENOENT: `dsh-host-open-in-app` does exactly that, which surfaces as
+// "path open failed: spawn powershell.exe ENOENT" when a path is clicked in the
+// GUI. `dsh-pwsh-local` survives the same environment because it falls back to
+// an absolute path. These are appended, never prepended, so a tool the user put
+// on PATH still wins.
+export function windowsSystemPathEntries(environment) {
+  const systemRoot = environment.SystemRoot ?? environment.SYSTEMROOT ?? environment.systemroot
+  if (!systemRoot) return []
+  return [
+    path.join(systemRoot, 'System32'),
+    systemRoot,
+    path.join(systemRoot, 'System32', 'Wbem'),
+    path.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0'),
+  ]
+}
+
 export function buildDshEnvironment(environment, {
   platform = process.platform,
   nodeExecutable,
@@ -92,9 +111,21 @@ export function buildDshEnvironment(environment, {
     ? Object.keys(environment).find((key) => key.toLowerCase() === 'path') ?? 'Path'
     : 'PATH'
   const separator = platform === 'win32' ? ';' : ':'
+  const inherited = environment[pathKey]
+
+  const entries = [bundledToolDirectory, inherited].filter(Boolean)
+  if (platform === 'win32') {
+    const present = new Set(
+      (inherited ?? '').split(separator).map((entry) => entry.trim().toLowerCase()).filter(Boolean),
+    )
+    for (const entry of windowsSystemPathEntries(environment)) {
+      if (!present.has(entry.toLowerCase())) entries.push(entry)
+    }
+  }
+
   return {
     ...environment,
-    [pathKey]: [bundledToolDirectory, environment[pathKey]].filter(Boolean).join(separator),
+    [pathKey]: entries.join(separator),
     DSH_DESKTOP_NODE_EXECUTABLE: nodeExecutable,
     DSH_DESKTOP_PNPM_CLI: bundledPnpmEntry,
     ...(platform === 'win32' ? {} : { ELECTRON_RUN_AS_NODE: '1' }),

@@ -68,6 +68,45 @@ userData directory so both can run side by side.
 
 ---
 
+## Packaged-launch adaptations
+
+The two changes above make the shell *work*; these two make it work when it is
+started by double-clicking an executable rather than by a script that has
+already set up the environment.
+
+### `DSH_HOME` is resolved by the app
+
+Started from Explorer, nothing has exported `DSH_HOME`, so dsh falls back to the
+shared `~/.dsh`. That home is not inherently wrong, but its profile pins
+whichever core was installed there and dsh may rewrite it in place, so a fork
+running a different core must not share it.
+
+`resolveDshHome()` in `src/main.js` prefers a `dsh-home` directory beside the
+executable, which keeps the folder self-contained and movable, and falls back to
+Electron's `userData` directory when the application directory is not writable -
+as happens for an installation under `Program Files`. An explicitly exported
+`DSH_HOME` always wins, so the existing launcher scripts keep working unchanged.
+
+### The Windows system directories are appended to the child `PATH`
+
+Windows resolves a bare `powershell.exe` through `PATH`, and some installations
+carry no system directories on `PATH` at all. Any plugin spawning one then dies
+with `ENOENT`; `dsh-host-open-in-app` does exactly that, which surfaces as
+
+```
+path open failed: path open failed: spawn powershell.exe ENOENT
+```
+
+when a path is clicked in the GUI. `dsh-pwsh-local` survives the same
+environment only because it falls back to an absolute path.
+
+`buildDshEnvironment()` now appends `%SystemRoot%\System32`, `%SystemRoot%`,
+`%SystemRoot%\System32\Wbem` and `%SystemRoot%\System32\WindowsPowerShell\v1.0`
+when they are absent. They are appended rather than prepended so a tool the user
+put on `PATH` still wins, and entries already present are never repeated.
+
+---
+
 ## Version and dependency changes
 
 | File | Change |

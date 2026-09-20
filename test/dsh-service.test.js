@@ -14,6 +14,7 @@ import {
   resolveWindowsNodeExecutable,
   resolveWindowsPickerPatch,
   unpackedPath,
+  windowsSystemPathEntries,
 } from '../src/dsh-service.js'
 
 test('extractReadyUrl reads the canonical loopback readiness URL', () => {
@@ -185,6 +186,67 @@ test('buildDshEnvironment exposes the bundled pnpm wrapper on Windows', () => {
     DSH_DESKTOP_NODE_EXECUTABLE: 'C:\\app\\dsh-node.exe',
     DSH_DESKTOP_PNPM_CLI: 'C:\\app\\node_modules\\pnpm\\bin\\pnpm.cjs',
   })
+})
+
+test('buildDshEnvironment appends the Windows system directories a bare PATH lacks', () => {
+  // Regression: with no system directories on PATH, dsh-host-open-in-app spawns
+  // a bare `powershell.exe` and dies with ENOENT.
+  const result = buildDshEnvironment({
+    Path: 'C:\\tools',
+    SystemRoot: 'C:\\Windows',
+  }, {
+    platform: 'win32',
+    nodeExecutable: 'C:\\app\\dsh-node.exe',
+    bundledToolDirectory: 'C:\\app\\assets\\bin',
+    bundledPnpmEntry: 'C:\\app\\node_modules\\pnpm\\bin\\pnpm.cjs',
+  })
+  assert.equal(result.Path, [
+    'C:\\app\\assets\\bin',
+    'C:\\tools',
+    'C:\\Windows\\System32',
+    'C:\\Windows',
+    'C:\\Windows\\System32\\Wbem',
+    'C:\\Windows\\System32\\WindowsPowerShell\\v1.0',
+  ].join(';'))
+})
+
+test('buildDshEnvironment does not repeat Windows system directories already present', () => {
+  const result = buildDshEnvironment({
+    Path: 'C:\\Windows\\System32;C:\\Windows\\System32\\WindowsPowerShell\\v1.0',
+    SystemRoot: 'C:\\Windows',
+  }, {
+    platform: 'win32',
+    nodeExecutable: 'C:\\app\\dsh-node.exe',
+    bundledToolDirectory: 'C:\\app\\assets\\bin',
+    bundledPnpmEntry: 'C:\\app\\node_modules\\pnpm\\bin\\pnpm.cjs',
+  })
+  assert.equal(result.Path.split(';').filter((entry) => entry === 'C:\\Windows\\System32').length, 1)
+  assert.equal(
+    result.Path.split(';').filter((entry) => entry === 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0').length,
+    1,
+  )
+  assert.equal(result.Path.endsWith('C:\\Windows\\System32\\Wbem'), true)
+})
+
+test('buildDshEnvironment leaves PATH alone when the system root is unknown', () => {
+  const result = buildDshEnvironment({ Path: 'C:\\tools' }, {
+    platform: 'win32',
+    nodeExecutable: 'C:\\app\\dsh-node.exe',
+    bundledToolDirectory: 'C:\\app\\assets\\bin',
+    bundledPnpmEntry: 'C:\\app\\node_modules\\pnpm\\bin\\pnpm.cjs',
+  })
+  assert.equal(result.Path, 'C:\\app\\assets\\bin;C:\\tools')
+  assert.deepEqual(windowsSystemPathEntries({}), [])
+})
+
+test('buildDshEnvironment does not touch PATH on non-Windows platforms', () => {
+  const result = buildDshEnvironment({ PATH: '/usr/bin', SystemRoot: 'C:\\Windows' }, {
+    platform: 'linux',
+    nodeExecutable: '/app/electron',
+    bundledToolDirectory: '/app/assets/bin',
+    bundledPnpmEntry: '/app/node_modules/pnpm/bin/pnpm.cjs',
+  })
+  assert.equal(result.PATH, '/app/assets/bin:/usr/bin')
 })
 
 test('bundled pnpm paths point to packaged runtime assets', () => {
