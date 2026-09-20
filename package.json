@@ -23,15 +23,16 @@
                     "postinstall":  "node scripts/prepare-dependencies.mjs",
                     "sync:upstream":  "node scripts/sync-upstream.mjs",
                     "prepare:windows":  "node scripts/prepare-dependencies.mjs \u0026\u0026 npm run build:win-launcher",
+                    "prepare:market":  "node scripts/install-dshmarket.mjs",
                     "build:win-launcher":  "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-launcher.ps1",
                     "test:win-console":  "node scripts/test-windows-hidden-console.mjs",
                     "smoke:packaged":  "node scripts/smoke-packaged.mjs",
-                    "pack":  "electron-builder --dir",
+                    "pack":  "npm run prepare:market \u0026\u0026 electron-builder --dir",
                     "dist":  "electron-builder",
                     "dist:mac":  "npm run dist:mac:arm64",
                     "dist:mac:arm64":  "electron-builder --mac dmg zip --arm64 --publish never",
                     "dist:mac:x64":  "electron-builder --mac dmg zip --x64 --publish never",
-                    "dist:win":  "npm run prepare:windows \u0026\u0026 electron-builder --win nsis zip --x64 --publish never",
+                    "dist:win":  "npm run prepare:windows \u0026\u0026 npm run prepare:market \u0026\u0026 electron-builder --win nsis zip --x64 --publish never",
                     "dist:linux":  "electron-builder --linux AppImage deb --x64 --publish never"
                 },
     "dependencies":  {
