@@ -36,6 +36,11 @@ jobs:
         if: steps.upstream.outputs.updated == 'true'
         run: |
           npm ci
+          # dshmarket is not in package.json on purpose: no published version
+          # satisfies 0.1.5-rc.2's peer graph, and --legacy-peer-deps would also
+          # skip the peer-declared interface packages the plugin tree needs.
+          # See FORK-NOTES.md.
+          node scripts/install-dshmarket.mjs
           npm test
       - name: Create update pull request
         if: steps.upstream.outputs.updated == 'true'
@@ -58,6 +63,18 @@ jobs:
             ## Validation
 
             - `npm ci`
+            - `node scripts/install-dshmarket.mjs`
             - `npm test`
+
+            ## Review checklist for this fork
+
+            - [ ] `dsh web` still announces its URL as `dsh web: http://127.0.0.1:<port>/?token=...`.
+                  `READY_PATTERN` in `src/dsh-service.js` depends on that shape; if upstream
+                  changes it the shell loads an unauthenticated URL and shows the server's
+                  401 page instead of the GUI. See `FORK-NOTES.md`.
+            - [ ] `DSH_MARKET_VERSION` in `scripts/prepare-dependencies.mjs` still resolves,
+                  and dshmarket still loads under the new core.
+            - [ ] The launch-token gate still applies: `curl http://127.0.0.1:<port>/` without
+                  a token must answer 401, not 200.
 
             This workflow intentionally creates a pull request instead of publishing desktop installers automatically. After review and cross-platform release validation, merge this PR, bump the desktop patch version, and publish through the existing tag-based release workflow.
