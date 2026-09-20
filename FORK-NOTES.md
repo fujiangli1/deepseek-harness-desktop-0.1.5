@@ -150,12 +150,60 @@ node scripts/install-dshmarket.mjs
 ```
 
 That fetches the tarball and unpacks it into `node_modules/dshmarket` without
-invoking npm's resolver, leaving the resolved peer tree intact. Its own
-dependencies (`js-yaml ^4.1.0`, `undici ^7.29.0`) are already satisfied by the
-tree.
+invoking npm's resolver, leaving the resolved peer tree intact. Pass a directory
+to target another tree, which is how a packaged app - it carries no `scripts/`
+of its own - gets its market:
+
+```
+node scripts/install-dshmarket.mjs ../packaged/resources/app
+```
 
 `DSH_MARKET_VERSION` in `scripts/prepare-dependencies.mjs` and the expectation in
 `test/prepare-dependencies.test.js` are both `1.50.0`.
+
+### dshmarket's runtime dependencies must be declared in package.json
+
+Because dshmarket is not a normal dependency, nothing pulls in what it imports.
+Node resolves its `js-yaml` and `undici` from the target's `node_modules`, and a
+clean `npm ci --omit=dev` installs only what `package.json` declares - so the
+market loaded in a development tree, where `undici` arrived as somebody else's
+transitive dependency, and then failed to load in the packaged app:
+
+```
+failed to import loader entry dsh-market (dshmarket):
+Cannot find package 'undici' imported from .../node_modules/dshmarket/lib/net.js
+```
+
+`js-yaml ^4.1.0` and `undici ^7.29.0` are therefore listed in `dependencies`
+alongside the dsh packages. They are not the wrapper's own dependencies, but
+they are the application's, because the application bundles the market.
+
+`install-dshmarket.mjs` verifies each of dshmarket's declared dependencies
+resolves from the target and fails with a message naming the culprit, so this
+class of mistake surfaces at install time rather than at boot.
+
+---
+
+## Packaging a runnable app without electron-builder
+
+`npm run pack` needs `app-builder.exe` and the `winCodeSign` binaries from
+electron-builder's own CDN, which is not always reachable. A runnable
+application directory can be assembled by hand instead:
+
+1. copy `node_modules/electron/dist/**` to the output directory and rename
+   `electron.exe` to the application name;
+2. copy the `files` whitelist from `package.json`'s `build` section into
+   `resources/app/` - note it is a whitelist, so `assets/icon.svg` and the other
+   unused icons are deliberately excluded;
+3. run `npm ci --omit=dev --ignore-scripts` inside `resources/app/`, which drops
+   the development tree from 893 MB to about 238 MB;
+4. run `scripts/install-dshmarket.mjs <resources/app>` and reapply the
+   `patchDshManifest` step, since `npm ci` wipes `node_modules`;
+5. point `DSH_HOME` at a fresh directory. Do **not** copy an existing profile:
+   its `profiles/node_modules` entries are Windows junctions into the
+   `node_modules` of whichever app created it, and dsh rebuilds them correctly
+   on first boot. Copy `settings.yaml`, `.credentials.yaml` and `sessions/`
+   instead.
 
 ---
 

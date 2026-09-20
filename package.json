@@ -55,7 +55,9 @@
                          "@deepseek-ai/dsh-subprocess":  "0.1.5-rc.2",
                          "@deepseek-ai/dsh-timeout":  "0.1.5-rc.2",
                          "@deepseek-ai/dsh-workflow":  "0.1.5-rc.2",
-                         "pnpm":  "10.34.5"
+                         "js-yaml":  "^4.1.0",
+                         "pnpm":  "10.34.5",
+                         "undici":  "^7.29.0"
                      },
     "devDependencies":  {
                             "electron":  "43.4.0",

@@ -16,12 +16,17 @@ import { gunzipSync } from 'node:zlib'
 import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DSH_MARKET_VERSION } from './prepare-dependencies.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const dest = join(root, 'node_modules', 'dshmarket')
+// Optionally target another tree: a packaged app carries no scripts/ directory
+// of its own, so its market is installed by this checkout's copy.
+//
+//   node scripts/install-dshmarket.mjs ../packaged/resources/app
+const target = process.argv[2] ? resolve(process.argv[2]) : root
+const dest = join(target, 'node_modules', 'dshmarket')
 const tarball = join(root, `dshmarket-${DSH_MARKET_VERSION}.tgz`)
 // .npmrc and npm_config_registry both carry a trailing slash; joining that
 // verbatim yields "https://host//dshmarket/1.50.0" and the packument 404s.
@@ -87,4 +92,21 @@ const installed = JSON.parse(readFileSync(join(dest, 'package.json'), 'utf8'))
 if (installed.version !== DSH_MARKET_VERSION) {
   throw new Error(`expected dshmarket@${DSH_MARKET_VERSION}, unpacked ${installed.version}`)
 }
-console.log(`ok: dshmarket@${installed.version} in node_modules`)
+
+// Node resolves dshmarket's imports from the target's node_modules, so its
+// runtime dependencies have to be there. Declaring them in package.json is what
+// makes `npm ci --omit=dev` install them; this check turns a boot-time
+// "Cannot find package 'undici'" into an install-time failure that names the
+// culprit. dshmarket is deliberately not a normal dependency, so nothing else
+// pulls its dependencies in.
+const missing = Object.keys(installed.dependencies ?? {})
+  .filter((name) => !existsSync(join(target, 'node_modules', name, 'package.json')))
+if (missing.length > 0) {
+  throw new Error(
+    `dshmarket needs ${missing.join(', ')}, which ${join(target, 'node_modules')} does not provide. `
+    + 'Declare them in package.json so a clean install supplies them.',
+  )
+}
+
+console.log(`ok: dshmarket@${installed.version} in ${join(target, 'node_modules')}`)
+console.log(`    runtime dependencies satisfied: ${Object.keys(installed.dependencies ?? {}).join(', ') || '(none)'}`)
