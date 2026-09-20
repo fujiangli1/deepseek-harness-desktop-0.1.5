@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.playwright-cli/
+output/
+.vercel/
+*.log
+.DS_Store
+assets/dsh-node.exe
+assets/windows-hidden-console.exe
+third-party-licenses/nodejs-LICENSE
+
+# --- added by the dsh 0.1.5-rc.2 fork ---------------------------------------
+# electron-builder output from `npm run pack` / `npm run dist`
+packaged/
+
+# Tarball fetched by scripts/install-dshmarket.mjs (see FORK-NOTES.md)
+dshmarket-*.tgz
+
+# An isolated DSH home next to the checkout: credentials, settings, sessions
+dsh-home*/
+**/.credentials.yaml
+**/.credentials.yaml.bak
+**/.anonymous-user-id
+**/sessions/
+**/storages/
+
+# Tool caches
+.npm-cache/
+.electron-cache/
+.electron-builder-cache/

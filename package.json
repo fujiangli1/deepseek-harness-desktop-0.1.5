@@ -1,0 +1,176 @@
+﻿{
+    "name":  "deepseek-harness-desktop",
+    "version":  "0.3.8-dsh0.1.5rc2",
+    "description":  "An unofficial desktop wrapper for DeepSeek Harness.",
+    "type":  "module",
+    "main":  "src/main.js",
+    "author":  {
+                   "name":  "Steven",
+                   "email":  "96154058+steven-kid@users.noreply.github.com"
+               },
+    "license":  "MIT",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/agent-earth/deepseek-harness-desktop.git"
+                   },
+    "homepage":  "https://deepseek-harness-desktop.vercel.app",
+    "bugs":  {
+                 "url":  "https://github.com/agent-earth/deepseek-harness-desktop/issues"
+             },
+    "scripts":  {
+                    "start":  "electron .",
+                    "test":  "node --test test/*.test.js",
+                    "postinstall":  "node scripts/prepare-dependencies.mjs",
+                    "sync:upstream":  "node scripts/sync-upstream.mjs",
+                    "prepare:windows":  "node scripts/prepare-dependencies.mjs \u0026\u0026 npm run build:win-launcher",
+                    "build:win-launcher":  "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-launcher.ps1",
+                    "test:win-console":  "node scripts/test-windows-hidden-console.mjs",
+                    "smoke:packaged":  "node scripts/smoke-packaged.mjs",
+                    "pack":  "electron-builder --dir",
+                    "dist":  "electron-builder",
+                    "dist:mac":  "npm run dist:mac:arm64",
+                    "dist:mac:arm64":  "electron-builder --mac dmg zip --arm64 --publish never",
+                    "dist:mac:x64":  "electron-builder --mac dmg zip --x64 --publish never",
+                    "dist:win":  "npm run prepare:windows \u0026\u0026 electron-builder --win nsis zip --x64 --publish never",
+                    "dist:linux":  "electron-builder --linux AppImage deb --x64 --publish never"
+                },
+    "dependencies":  {
+                         "@deepseek-ai/cordis-plugin-group":  "1.0.1",
+                         "@deepseek-ai/dsh":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-anonymous-user-id":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-atomic-write":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-bash-local":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-code-runtime":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-compaction":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-fs":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-invariants":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-output-retention":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-sandbox":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-scope":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-session-telemetry":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-session-title-llm":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-shell":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-spill":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-subagent-in-process-driver":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-subprocess":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-timeout":  "0.1.5-rc.2",
+                         "@deepseek-ai/dsh-workflow":  "0.1.5-rc.2",
+                         "pnpm":  "10.34.5"
+                     },
+    "devDependencies":  {
+                            "electron":  "43.4.0",
+                            "electron-builder":  "26.0.12"
+                        },
+    "build":  {
+                  "afterSign":  "scripts/after-pack.cjs",
+                  "appId":  "io.github.steven-kid.deepseek-harness-desktop",
+                  "productName":  "DeepSeek Harness",
+                  "artifactName":  "DeepSeek-Harness-Desktop-${version}-${arch}.${ext}",
+                  "asar":  false,
+                  "files":  [
+                                "src/**/*",
+                                "config/**/*",
+                                "assets/icon.png",
+                                "assets/tray.png",
+                                "assets/trayTemplate.png",
+                                "assets/trayTemplate@2x.png",
+                                "assets/bin/**/*",
+                                "assets/dsh-node.exe",
+                                "assets/windows-hidden-console.exe",
+                                "package.json",
+                                "LICENSE",
+                                "third-party-licenses/**/*",
+                                "node_modules/**/*"
+                            ],
+                  "directories":  {
+                                      "output":  "dist",
+                                      "buildResources":  "assets"
+                                  },
+                  "mac":  {
+                              "category":  "public.app-category.developer-tools",
+                              "icon":  "assets/icon.icns",
+                              "hardenedRuntime":  false,
+                              "gatekeeperAssess":  false,
+                              "identity":  null,
+                              "target":  [
+                                             {
+                                                 "target":  "dmg",
+                                                 "arch":  [
+                                                              "arm64"
+                                                          ]
+                                             },
+                                             {
+                                                 "target":  "zip",
+                                                 "arch":  [
+                                                              "arm64"
+                                                          ]
+                                             }
+                                         ]
+                          },
+                  "win":  {
+                              "icon":  "assets/icon.ico",
+                              "artifactName":  "DeepSeek-Harness-Desktop-${version}-windows-${arch}.${ext}",
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             },
+                                             {
+                                                 "target":  "zip",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ]
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "runAfterFinish":  false
+                           },
+                  "linux":  {
+                                "icon":  "assets/icon.png",
+                                "category":  "Development",
+                                "executableName":  "deepseek-harness",
+                                "artifactName":  "DeepSeek-Harness-Desktop-${version}-linux-${arch}.${ext}",
+                                "target":  [
+                                               {
+                                                   "target":  "AppImage",
+                                                   "arch":  [
+                                                                "x64"
+                                                            ]
+                                               },
+                                               {
+                                                   "target":  "deb",
+                                                   "arch":  [
+                                                                "x64"
+                                                            ]
+                                               }
+                                           ]
+                            },
+                  "dmg":  {
+                              "title":  "DeepSeek Harness Desktop ${version}",
+                              "backgroundColor":  "#f5f7fb",
+                              "window":  {
+                                             "width":  540,
+                                             "height":  380
+                                         },
+                              "contents":  [
+                                               {
+                                                   "x":  140,
+                                                   "y":  185
+                                               },
+                                               {
+                                                   "x":  400,
+                                                   "y":  185,
+                                                   "type":  "link",
+                                                   "path":  "/Applications"
+                                               }
+                                           ]
+                          }
+              }
+}

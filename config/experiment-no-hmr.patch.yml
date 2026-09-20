@@ -1,0 +1,9 @@
+# Experiment: is client-hmr the cold-start bottleneck?
+#
+# dsh-client-hmr scans the whole plugin tree at startup, composes
+# window.__DSH_BOOT__ and serves /plugins/<id>/client.js. Its stated purpose is
+# to support a rebuild watcher (pnpm run dev:web) rewriting client bundles --
+# something a packaged desktop shell never does. If it dominates startup, this
+# patch is the single highest-value optimization for the fork.
+- id: client-hmr
+  disabled: true

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05070b" />
+    <meta
+      name="description"
+      content="DeepSeek Harness Desktop — 基于官方 DeepSeek Harness 的简洁、开箱即用跨平台桌面客户端。"
+    />
+    <meta property="og:title" content="DeepSeek Harness Desktop" />
+    <meta
+      property="og:description"
+      content="An unofficial community desktop client for DeepSeek Harness, available on macOS, Windows, and Linux."
+    />
+    <meta
+      property="og:image"
+      content="https://deepseek-harness-desktop.vercel.app/product-screenshot.jpg"
+    />
+    <meta property="og:type" content="website" />
+    <title>DeepSeek Harness Desktop</title>
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="preload" href="./product-screenshot.jpg" as="image" type="image/jpeg" />
+    <link rel="stylesheet" href="./harness-site.css" />
+  </head>
+  <body>
+    <header class="replica-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="DeepSeek Harness Desktop">
+          <img class="wordmark" src="./deepseek-wordmark.svg" alt="DeepSeek" />
+          <span class="harness-chip">Harness</span>
+          <span class="desktop-chip" data-i18n="desktopPreview">桌面版</span>
+        </a>
+        <nav class="desktop-nav" aria-label="主要导航">
+          <a href="#features" data-i18n="features">桌面能力</a>
+          <a href="#design" data-i18n="design">设计思路</a>
+          <a href="#downloads" data-i18n="downloads">下载</a>
+        </nav>
+        <div class="header-actions">
+          <div class="language-switcher" role="group" aria-label="切换语言">
+            <button type="button" class="language-button active" data-language="zh">中文</button>
+            <button type="button" class="language-button" data-language="en">EN</button>
+          </div>
+          <a class="header-github button button-light" href="https://github.com/agent-earth/deepseek-harness-desktop" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .8A11.2 11.2 0 0 0 8.46 22.62c.56.1.77-.24.77-.54v-2.17c-3.14.68-3.8-1.33-3.8-1.33-.51-1.3-1.25-1.66-1.25-1.66-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.23 3.27.94.1-.73.39-1.23.71-1.51-2.5-.29-5.14-1.26-5.14-5.54 0-1.23.44-2.23 1.15-3.02-.12-.28-.5-1.43.1-2.98 0 0 .94-.3 3.08 1.15a10.62 10.62 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.6 1.55.22 2.7.1 2.98.72.79 1.15 1.79 1.15 3.02 0 4.3-2.64 5.25-5.15 5.53.41.35.76 1.04.76 2.1v3.18c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z"/></svg>
+            <span>GitHub</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-ribbons" aria-hidden="true">
+          <span class="ribbon ribbon-a"></span>
+          <span class="ribbon ribbon-b"></span>
+          <span class="ribbon ribbon-c"></span>
+        </div>
+        <div class="hero-whale" aria-hidden="true"></div>
+        <div class="container hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="preview">DeepSeek Harness 非官方桌面版</p>
+            <h1 data-i18n="headline">Harness 桌面即用</h1>
+            <div class="hero-description">
+              <p data-i18n="heroParagraphOne">将官方 DeepSeek Harness 完整封装为桌面应用，无需命令行，也无需手动管理端口。</p>
+              <p data-i18n="heroParagraphTwo">保留模型、工具、技能、会话、沙箱和存储等全部能力，并内置 awesome-dsh-plugin 社区插件市场。</p>
+            </div>
+            <div class="hero-actions">
+              <a class="button button-light" id="primary-download" href="https://github.com/agent-earth/deepseek-harness-desktop/releases/latest">
+                <svg class="platform-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path id="platform-icon-path" d="M17.05 12.54c-.02-2.27 1.86-3.37 1.95-3.42a4.2 4.2 0 0 0-3.31-1.79c-1.39-.15-2.74.83-3.45.83-.72 0-1.81-.82-2.98-.8a4.38 4.38 0 0 0-3.69 2.25c-1.6 2.77-.41 6.84 1.12 9.08.76 1.09 1.64 2.31 2.81 2.27 1.14-.05 1.57-.73 2.95-.73 1.36 0 1.77.73 2.96.7 1.23-.02 2-1.1 2.73-2.2a9.08 9.08 0 0 0 1.25-2.55 3.93 3.93 0 0 1-2.34-3.64ZM14.78 5.85a4 4 0 0 0 .92-2.86 4.1 4.1 0 0 0-2.66 1.36 3.8 3.8 0 0 0-.95 2.75 3.39 3.39 0 0 0 2.69-1.25Z"/>
+                </svg>
+                <span id="primary-download-label" data-i18n="downloadMac">下载 macOS 版</span>
+              </a>
+              <a class="button button-glass" href="https://github.com/agent-earth/deepseek-harness-desktop/releases/latest" target="_blank" rel="noreferrer" data-i18n="allDownloads">全部下载</a>
+              <a class="button button-glass" href="https://pan.quark.cn/s/e2dfc232c52d" target="_blank" rel="noreferrer" data-i18n="quark">夸克网盘</a>
+            </div>
+          </div>
+
+          <div class="hero-terminal" aria-label="桌面版安装">
+            <div class="terminal-tabs">
+              <button class="terminal-tab active" type="button" data-terminal="download" data-i18n="oneClick">一键安装</button>
+              <button class="terminal-tab" type="button" data-terminal="source" data-i18n="sourceInstall">源码安装</button>
+            </div>
+            <div class="terminal-window">
+              <div class="terminal-bar">
+                <span class="terminal-dots"><i></i><i></i><i></i></span>
+                <button class="copy-button" type="button" data-i18n="copy">复制</button>
+              </div>
+              <code id="terminal-command">$ open DeepSeek-Harness-Desktop*.dmg</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="intro-section section-dark" id="features">
+        <div class="container">
+          <div class="section-intro centered">
+            <span class="mono-pill">HARNESS + DESKTOP</span>
+            <h2><strong>HARNESS</strong> <span data-i18n="introTitle">让 Agent 在桌面上持续工作</span></h2>
+            <p data-i18n="introDescription">模型是 Agent 的灵魂。Harness 赋予 Agent 理解环境和使用工具的能力，Desktop 则让这一切打开即用。</p>
+          </div>
+          <div class="capability-grid">
+            <article class="capability-card">
+              <div class="capability-icon atom-icon" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+              <h3 data-i18n="capabilityOneTitle">原生桌面封装</h3>
+              <small>NATIVE DESKTOP SHELL</small>
+              <p data-i18n="capabilityOneDescription">保留官方 Web UI 与 Harness 内核，只增加桌面窗口、生命周期和系统集成。</p>
+            </article>
+            <article class="capability-card">
+              <div class="capability-icon orbit-icon" aria-hidden="true"><span></span><i></i><i></i><i></i></div>
+              <h3 data-i18n="capabilityTwoTitle">内置插件市场</h3>
+              <small>AWESOME DSH PLUGINS</small>
+              <p data-i18n="capabilityTwoDescription">直接浏览、搜索、安装、更新和卸载社区插件，无需另行配置 pnpm。</p>
+            </article>
+            <article class="capability-card">
+              <div class="capability-icon blocks-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <h3 data-i18n="capabilityThreeTitle">跨平台发布</h3>
+              <small>MAC · WINDOWS · LINUX</small>
+              <p data-i18n="capabilityThreeDescription">提供 Apple Silicon、Intel Mac、Windows x64 与 Linux x64 安装包。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="design-section section-dark" id="design">
+        <div class="container">
+          <div class="section-intro">
+            <span class="mono-pill" data-i18n="designLabel">设计思路</span>
+            <h2 data-i18n="designTitle">能力保持不变，使用方式更加自然</h2>
+          </div>
+          <div class="design-rows">
+            <article class="design-row">
+              <div class="design-copy">
+                <h3><span class="row-icon">◇</span><span data-i18n="designOneTitle">打开即用</span></h3>
+                <p data-i18n="designOneDescription">启动应用时自动拉起 DeepSeek Harness，并在服务准备完成后加载官方 Web UI。你无需记住命令，也不必处理端口冲突。</p>
+              </div>
+              <div class="design-media desktop-preview">
+                <div class="preview-titlebar">
+                  <span class="terminal-dots"><i></i><i></i><i></i></span>
+                  <span>DeepSeek Harness Desktop</span>
+                  <span class="preview-online">● Local</span>
+                </div>
+                <img src="./product-screenshot.jpg" width="1800" height="1172" loading="lazy" decoding="async" alt="DeepSeek Harness Desktop 应用界面" />
+              </div>
+            </article>
+            <article class="design-row reverse">
+              <div class="design-copy">
+                <h3><span class="row-icon">▷</span><span data-i18n="designTwoTitle">本地运行，有迹可循</span></h3>
+                <p data-i18n="designTwoDescription">Harness 服务运行在本机，工作目录、会话与工具调用保持原有机制。桌面封装不会改变 Harness 的能力边界。</p>
+              </div>
+              <div class="design-media code-preview">
+                <div class="code-preview-head"><span>DeepSeek Harness</span><span>127.0.0.1</span></div>
+                <div class="code-preview-body">
+                  <span><i class="blue"></i>Runtime</span><strong data-i18n="runtimeReady">已就绪</strong>
+                  <span><i class="green"></i>Workspace</span><strong data-i18n="localDirectory">本地目录</strong>
+                  <span><i class="purple"></i>Session</span><strong data-i18n="persistent">持续保存</strong>
+                </div>
+              </div>
+            </article>
+            <article class="design-row">
+              <div class="design-copy">
+                <h3><span class="row-icon">▦</span><span data-i18n="designThreeTitle">适配不同系统</span></h3>
+                <p data-i18n="designThreeDescription">在 macOS、Windows 和 Linux 上使用一致的 Harness 体验，并针对系统窗口、菜单、托盘与目录选择器进行适配。</p>
+              </div>
+              <div class="design-media platforms-preview">
+                <span>macOS<strong>Apple Silicon<br />Intel</strong></span>
+                <span>Windows<strong>x64 Installer<br />Portable ZIP</strong></span>
+                <span>Linux<strong>AppImage<br />DEB</strong></span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-section section-dark">
+        <div class="container">
+          <h2 data-i18n="demoTitle">完整的 DeepSeek Harness，原生的桌面体验</h2>
+          <div class="demo-frame">
+            <img src="./product-screenshot.jpg" width="1800" height="1172" loading="lazy" decoding="async" alt="DeepSeek Harness Desktop 产品预览" />
+          </div>
+        </div>
+      </section>
+
+      <section class="downloads-section section-dark" id="downloads">
+        <div class="container">
+          <div class="section-intro">
+            <span class="mono-pill" data-i18n="startNow">开始使用</span>
+            <h2 data-i18n="downloadTitle">选择适合你的安装包</h2>
+          </div>
+          <div class="install-grid">
+            <article class="install-card">
+              <h3>macOS</h3>
+              <p data-i18n="macDescription">支持 Apple Silicon 与 Intel Mac。</p>
+              <div class="install-links">
+                <a href="https://github.com/agent-earth/deepseek-harness-desktop/releases/download/v0.3.8/DeepSeek-Harness-Desktop-0.3.8-arm64.dmg"><span>$</span> Apple Silicon · DMG <b>↓</b></a>
+                <a href="https://github.com/agent-earth/deepseek-harness-desktop/releases/download/v0.3.8/DeepSeek-Harness-Desktop-0.3.8-x64.dmg"><span>$</span> Intel · DMG <b>↓</b></a>
+              </div>
+            </article>
+            <article class="install-card">
+              <h3>Windows & Linux</h3>
+              <p data-i18n="otherPlatformsDescription">提供 Windows 安装程序与 Linux AppImage。</p>
+              <div class="install-links">
+                <a href="https://github.com/agent-earth/deepseek-harness-desktop/releases/download/v0.3.8/DeepSeek-Harness-Desktop-0.3.8-windows-x64.exe"><span>$</span> Windows x64 · EXE <b>↓</b></a>
+                <a href="https://github.com/agent-earth/deepseek-harness-desktop/releases/download/v0.3.8/DeepSeek-Harness-Desktop-0.3.8-linux-x86_64.AppImage"><span>$</span> Linux x64 · AppImage <b>↓</b></a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="join-section section-dark">
+        <div class="join-grid" aria-hidden="true"></div>
+        <div class="join-whale" aria-hidden="true"></div>
+        <div class="container join-content">
+          <h2 data-i18n="joinTitle">让 Harness 随手可用</h2>
+          <p data-i18n="joinDescription">这是一个非官方社区项目，只封装桌面端能力，不修改 DeepSeek Harness 本身。欢迎下载、反馈与共同完善。</p>
+          <div class="hero-actions">
+            <a class="button button-light" href="https://github.com/agent-earth/deepseek-harness-desktop" target="_blank" rel="noreferrer" data-i18n="viewGithub">查看 GitHub</a>
+            <a class="button button-glass" href="https://github.com/agent-earth/deepseek-harness-desktop/releases/latest" target="_blank" rel="noreferrer" data-i18n="allDownloads">全部下载</a>
+            <a class="button button-glass" href="https://pan.quark.cn/s/e2dfc232c52d" target="_blank" rel="noreferrer" data-i18n="quark">夸克网盘</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer section-dark">
+      <div class="container footer-inner">
+        <span data-i18n="community">非官方社区项目</span>
+        <span>开源 · MIT · DeepSeek Harness Desktop</span>
+        <span><a href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noreferrer">Powered by DeepSeek Harness</a></span>
+      </div>
+    </footer>
+
+    <script src="./harness-site.js"></script>
+  </body>
+</html>
