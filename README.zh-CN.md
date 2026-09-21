@@ -1,16 +1,12 @@
 <h1 align="center">
   <img src="assets/icon.png" width="72" alt="DeepSeek Harness Desktop 标志" />
   <br />
-  DeepSeek Harness Desktop
+  DeepSeek Harness Desktop 0.1.5
 </h1>
 
 <p align="center">
-  面向 <a href="https://github.com/deepseek-ai/deepseek-harness">DeepSeek Harness</a>
-  的轻量、本地优先、跨平台桌面封装。
-</p>
-
-<p align="center">
-  <a href="https://deepseek-harness-desktop.vercel.app"><strong>官方网站</strong></a>
+  把 <a href="https://github.com/deepseek-ai/deepseek-harness">DeepSeek Harness</a>
+  内核 <code>0.1.5-rc.2</code> 装进桌面外壳的社区分支。
 </p>
 
 <p align="center">
@@ -18,154 +14,318 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/agent-earth/deepseek-harness-desktop/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/agent-earth/deepseek-harness-desktop?style=flat-square&color=171513" /></a>
+  <a href="https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/fujiangli1/deepseek-harness-desktop-0.1.5?style=flat-square&color=171513" /></a>
   <a href="LICENSE"><img alt="许可证：MIT" src="https://img.shields.io/badge/License-MIT-171513.svg?style=flat-square" /></a>
-  <a href="https://github.com/agent-earth/deepseek-harness-desktop/actions/workflows/release.yml"><img alt="发行构建" src="https://github.com/agent-earth/deepseek-harness-desktop/actions/workflows/release.yml/badge.svg" /></a>
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel-171513.svg?style=flat-square" />
-  <img alt="Windows" src="https://img.shields.io/badge/Windows-x64-171513.svg?style=flat-square" />
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-x64-171513.svg?style=flat-square" />
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2B%20x64-171513.svg?style=flat-square" />
+  <img alt="dsh" src="https://img.shields.io/badge/dsh-0.1.5--rc.2-171513.svg?style=flat-square" />
 </p>
 
-<img width="2880" height="1882" alt="DeepSeek Harness Desktop 截图" src="https://github.com/user-attachments/assets/4252ec13-c09b-4e74-996f-cf4d1bcb74c8" />
-
-DeepSeek Harness Desktop 将官方 DeepSeek Harness Web 体验封装为独立桌面应用。无需手动启动 CLI 或管理端口，打开应用即可使用完整 Harness 界面。
-
-本项目专注于桌面宿主能力，不 fork、不修改、不注入，也不重新实现 Harness UI。模型、会话、设置、插件和 Agent 能力均由官方 `@deepseek-ai/dsh` 提供。
-
 > [!IMPORTANT]
-> 本项目是非官方社区封装，目前仍属于早期版本，并依赖快速演进中的 `@deepseek-ai/dsh@0.1.1-rc.2`。macOS 构建尚未经过 Apple 公证，Windows 构建尚未进行商业代码签名。
+> **这是 [agent-earth/deepseek-harness-desktop](https://github.com/agent-earth/deepseek-harness-desktop) 的非官方分支。**
+> 桌面外壳的架构、设计、UI 处理和安全模型全部来自原作者，**功劳属于上游**。
+> 本分支只做一件事：把它对接的内核从 `0.1.1-rc.2` 换成 `0.1.5-rc.2`，并补上必要的兼容修改。
+> 如果你不需要 0.1.5 内核，请直接使用[上游原版](https://github.com/agent-earth/deepseek-harness-desktop)。
 
-## 下载
+---
 
-| 平台 | 架构 | 安装包 | 下载 |
+## 为什么做这个
+
+上游 `agent-earth/deepseek-harness-desktop` v0.3.8 把内核**锁死在 `@deepseek-ai/dsh@0.1.1-rc.2`**，
+而 dsh 内核已经推进到 `0.1.5-rc.2`（npm `latest` / `next` tag），两者之间跨了四个版本：
+
+- 内核新增了 **启动 token 认证**（`0.1.2` 起，ready URL 变成 `http://127.0.0.1:<port>/?token=...`）
+- 包结构发生迁移（`dsh-host-apiproxy` 被移出）
+- 插件市场的 peer 依赖范围没有跟上新内核
+
+结果是：**上游外壳跑不了新内核**，而新内核本身只有 CLI / Web，没有桌面宿主。
+
+所以这个分支的目标很明确：
+
+1. **让 0.1.5 内核有一个能日常双击使用的桌面外壳**，而不是每次都开终端敲 `dsh web`
+2. **完全不影响原有的 0.1.1 安装** —— 独立 `DSH_HOME`、独立 app 名、独立单实例锁，两套可以并存
+3. **保持轻量** —— 复用上游的 profile junction 机制，不复制依赖树
+4. **能跟着内核继续迭代** —— 保留上游的自动同步 workflow，内核出新版本时能自动开 PR
+
+一句话：**不是为了做一个新外壳，而是为了让上游这个好外壳能继续用下去。**
+
+---
+
+## 这个分支改了什么
+
+完整的技术说明、证据和上游对比在 [`FORK-NOTES.md`](FORK-NOTES.md)。
+
+| # | 改动 | 为什么必须改 |
+| --- | --- | --- |
+| 1 | `src/dsh-service.js` 的 ready URL 正则 | 内核 `0.1.2+` 给 URL 加了 `?token=` 认证参数。原正则以 `\b` 结尾会把 token 截掉，外壳于是加载未认证 URL → 服务器返回 **401 → 白屏**。**这是最关键的一处** |
+| 2 | `scripts/prepare-dependencies.mjs` 容忍 `dsh-host-apiproxy` 缺失 | 内核 `0.1.2` 迁移了这个包，脚本原本会因找不到文件而中断安装 |
+| 3 | `src/main.js` 的 `APP_NAME` 改为 `DeepSeek Harness 0.1.5` | Electron 用 app 名推导 userData 目录，单实例锁基于该目录。与上游同名会导致**上游外壳正在运行时本外壳静默退出**（exit 0，无任何输出） |
+| 4 | `src/main.js` 新增 `resolveDshHome()` | 双击启动时没有人设置 `DSH_HOME`，内核会退回共享的 `~/.dsh`，那里锁的是 0.1.1 的包，会加载错版本 |
+| 5 | `src/dsh-service.js` 补齐 Windows 系统目录到 `PATH` | 部分机器上 `System32` 不在 `PATH` 里，任何 spawn 裸 `powershell.exe` 的插件都会报 `ENOENT` |
+| 6 | `src/dsh-service.js` 的 `READY_PATTERN` 保留 token 同时仍只接受回环地址 | 上游有测试断言局域网 URL 必须返回 `undefined`，改动不能破坏这条安全约束 |
+| 7 | 新增 `install-shortcuts.cmd` / `install-shortcuts.ps1` | 便携版没有安装程序，Windows 不会创建桌面和开始菜单快捷方式，搜索也找不到。脚本补上这一步，并可用 `-Remove` 撤销 |
+| 8 | `scripts/install-dshmarket.mjs` | 所有已发布 dshmarket 声明的 peer 范围都不覆盖 `0.1.5-rc.2`，`npm install` 会 `ERESOLVE` 失败，因此改为在打包阶段手工注入 |
+
+### 关于插件市场（dshmarket）
+
+`dshmarket` **刻意不放在 `package.json` 的 `dependencies` 里**。
+
+它的 peer 范围只到 `^0.1.0-rc.7 || ^0.1.1-rc.2 || ^0.1.2-alpha.2`，装不进 `0.1.5-rc.2`。
+
+**注意：不能用 `--legacy-peer-deps` 绕过。** 那个 flag 会连 peer 声明的接口包一起跳过安装，
+而 0.1.5 里 `dsh-jobs`、`dsh-settings`、`dsh-attachment`、`dsh-session-query`、
+`dsh-session-persistence`、`dsh-util-time` 都是被 `-local` / `-file` 实现包声明为 peer 的，
+跳过它们会导致插件树直接加载失败（`Cannot find package '@deepseek-ai/dsh-jobs'`）。
+
+正确做法是打包阶段用 `scripts/install-dshmarket.mjs` 注入。
+它的两个运行时依赖 `js-yaml` / `undici` **必须**在 `package.json` 里声明，
+否则 `npm ci --omit=dev` 不会安装它们，市场会在启动时报
+`Cannot find package 'undici' imported from dshmarket/lib/net.js`。
+
+---
+
+## 下载与安装
+
+本分支目前只提供 **Windows x64 便携版**。
+
+| 平台 | 架构 | 形式 | 下载 |
 | --- | --- | --- | --- |
-| macOS | Apple Silicon | DMG | [下载 Apple Silicon 版本](https://github.com/agent-earth/deepseek-harness-desktop/releases/latest/download/DeepSeek-Harness-Desktop-0.3.8-arm64.dmg) |
-| macOS | Intel | DMG | [下载 Intel 版本](https://github.com/agent-earth/deepseek-harness-desktop/releases/latest/download/DeepSeek-Harness-Desktop-0.3.8-x64.dmg) |
-| Windows | x64 | 安装程序 | [下载 Windows 安装程序](https://github.com/agent-earth/deepseek-harness-desktop/releases/latest/download/DeepSeek-Harness-Desktop-0.3.8-windows-x64.exe) |
-| Windows | x64 | 便携 ZIP | [下载 Windows ZIP](https://github.com/agent-earth/deepseek-harness-desktop/releases/latest/download/DeepSeek-Harness-Desktop-0.3.8-windows-x64.zip) |
-| Linux | x64 | AppImage | [下载 AppImage](https://github.com/agent-earth/deepseek-harness-desktop/releases/latest/download/DeepSeek-Harness-Desktop-0.3.8-linux-x86_64.AppImage) |
-| Debian / Ubuntu | x64 | deb | [下载 deb](https://github.com/agent-earth/deepseek-harness-desktop/releases/latest/download/DeepSeek-Harness-Desktop-0.3.8-linux-amd64.deb) |
+| Windows | x64 | 便携 ZIP | [下载便携版](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-portable.zip) |
 
-全部当前和历史安装包可在 [GitHub Releases](https://github.com/agent-earth/deepseek-harness-desktop/releases) 查看，也可以通过夸克网盘镜像下载：[夸克网盘 - DeepSeek Harness Desktop v0.3.1](https://pan.quark.cn/s/e2dfc232c52d)
+全部版本见 [Releases](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases)。
 
-## 为什么需要桌面版
+### 使用步骤
 
-DeepSeek Harness 已经提供完整的 Agent Runtime 和 Web UI。本项目不重复实现这些能力，而是补充桌面应用所需的宿主层：
+1. 解压到一个**你不会随手删掉的目录**，例如 `D:\DeepSeek Harness 0.1.5\`
+   - 目录路径建议不要有中文以外的特殊字符
+   - 解压后约 675 MB
+2. 双击 `DeepSeek Harness 0.1.5.exe`
+   - 首次启动较慢（约 10 秒），因为要在 `dsh-home\` 下创建 profile 和 483 个 junction
+   - Windows Defender SmartScreen 可能拦截：点 **更多信息 → 仍要运行**
+3. 双击 `install-shortcuts.cmd` 创建桌面和开始菜单快捷方式
+   - 便携版没有安装程序，**不做这一步 Windows 搜索是找不到它的**
+   - 撤销：`install-shortcuts.cmd -Remove`
+4. 启动后右键任务栏图标 → **固定到任务栏**
 
-- 自动启动和关闭本地 Harness 服务
-- 自动分配随机 `127.0.0.1` 回环端口
-- 等待 Harness 就绪后再显示应用窗口
-- 提供单实例桌面窗口和外部链接安全处理
-- 为渲染进程启用沙箱、`contextIsolation` 和导航限制
-- 为 macOS、Windows 和 Linux 提供可直接安装的发行包
+### 关于 `DSH_HOME`
+
+程序自动把 `DSH_HOME` 推导为「**exe 所在目录** + `dsh-home`」，
+所以**整个文件夹可以随意移动或改盘符，不需要改任何配置**。
+移动位置后重新运行一次 `install-shortcuts.cmd` 即可让快捷方式指向新位置。
+
+> [!NOTE]
+> 首次启动会在 `dsh-home\` 下生成 `profiles\`，里面是指向本应用 `node_modules` 的**绝对路径 junction**。
+> 因此**不要把 `profiles\` 从一台机器复制到另一台机器**。需要迁移时只带走
+> `settings.yaml`、`.credentials.yaml` 和 `sessions\`，让内核自己重建 profile。
+
+---
 
 ## 主要特性
 
-- Harness 就绪后直接进入官方界面，无额外操作步骤
-- 启动 Harness 服务时显示轻量等待界面，不再出现无响应感
-- 内置“设置 → Plugin Market”，由 [dsh-market](https://github.com/dsh-market/dsh-market) 与经过整理的 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 目录提供
-- 随应用提供 pnpm，可直接安装、更新和卸载目录中的插件，无需另行配置 Node.js 工具链
-- 支持系统托盘驻留，关闭主窗口后可继续在后台运行
-- 可通过托盘菜单在系统浏览器中打开当前本地 Harness 地址
+以下特性全部继承自上游外壳：
+
+- 内核就绪后直接进入官方界面，没有多余步骤
+- 启动期间显示轻量等待界面，不会出现「点了没反应」的观感
+- 内置**设置 → Plugin Market**，可直接浏览、搜索、安装、更新、卸载社区插件
+- 随应用提供 pnpm 运行时，装插件不需要另配 Node.js 工具链
+- 支持系统托盘驻留，关闭主窗口后继续在后台运行
+- 可通过托盘菜单在系统浏览器中打开当前本地地址
 - 保留完整的设置、模型、会话、插件和 Agent 能力
-- 应用退出时自动终止 Harness 子进程
-- Web 服务仅监听随机本地回环端口，不暴露到局域网
-- macOS 支持 Apple Silicon 和 Intel
-- macOS 标题栏会与 DSH 当前浅色或深色主题自然融合
-- Windows 支持 x64 安装程序与便携 ZIP
-- Linux 支持 x64 AppImage 和 deb
-- Windows 使用官方应用内目录浏览器，避免打包环境下的原生文件夹对话框异常
-- Windows 预留可拖动标题栏，避免原生窗口按钮遮挡 Harness 内容
-- Windows 隐藏 Electron 默认的 File、Edit、View 和 Window 菜单栏
+- 退出时优雅结束内核子进程
+- 只监听随机回环端口（`127.0.0.1`）
+- Windows 下使用官方内置目录浏览器，规避打包后原生对话框 worker 失败的问题
+- Windows 下保留可拖拽标题栏，避免原生窗口按钮遮挡界面
+- Windows 下移除 Electron 默认的 File / Edit / View / Window 菜单栏
+
+本分支额外补充：
+
+- **`install-shortcuts.cmd`** —— 便携版一键创建桌面 / 开始菜单快捷方式并注册 App Paths
+- **独立的 `DSH_HOME` 与 app 名** —— 可与上游 0.3.8 版本并存，互不干扰
+- **自动补 `PATH` 系统目录** —— 修掉 `spawn powershell.exe ENOENT`
+- **自动跟随内核升级** —— 上游的 `sync-upstream.yml` 每日检测新内核并自动开 PR
+
+---
 
 ## 插件市场
 
-打开“**设置 → Plugin Market**”即可浏览和搜索社区插件，查看插件来源，并执行安装、更新、停用或卸载。插件目录实时读取自 [awesome-dsh-plugin.com](https://awesome-dsh-plugin.com)，插件变更仍通过官方 `dsh plugin --profile web` 流程完成，并保存在本机 DSH profile 中。
+打开 **设置 → Plugin Market** 即可浏览和搜索社区插件目录、查看插件来源，
+并执行安装、更新、停用或卸载。
 
-桌面安装包内置 `dshmarket@1.40.0` 和兼容的 pnpm 运行时。由于应用生命周期由桌面宿主管理，市场内的一键进程重启已关闭；当插件提示需要重启时，请刷新页面或重新启动 DeepSeek Harness Desktop。
+插件目录实时读取自 [awesome-dsh-plugin.com](https://awesome-dsh-plugin.com)，
+插件变更仍通过官方 `dsh plugin --profile web` 流程完成，并保存在本机 profile 中。
+
+本分支内置 `dshmarket@1.50.0` 与兼容的 pnpm 运行时。
+由于应用生命周期由桌面宿主管理，**市场内的「一键重启进程」已关闭**；
+插件提示需要重启时，请刷新页面或重启本应用。
 
 > [!WARNING]
-> 目录中的插件是社区维护的第三方代码，不代表 DeepSeek 或本项目的背书。插件安装后会以当前用户权限在本机运行，并可能访问 Harness 可访问的数据。安装前请检查源码、发布者、权限和构建脚本提示。
+> 插件目录中的条目是**社区维护的第三方代码，不构成本项目或 DeepSeek 的背书**。
+> 安装后的插件以你的用户权限在本地运行，可能访问 Harness 能访问到的数据。
+> 安装前请先审查源码、发布者、权限和构建脚本警告。
 
-## 安装说明
-
-### macOS
-
-macOS 构建已进行完整性签名，但尚未经过 Apple 公证。首次启动：
-
-1. 打开 DMG，将 **DeepSeek Harness** 拖入“应用程序”。
-2. 尝试打开应用；如果 macOS 阻止启动，请点击“完成”。
-3. 打开“系统设置 → 隐私与安全性”。
-4. 在“安全性”区域找到 DeepSeek Harness，点击“仍要打开”。
-5. 再次点击“打开”确认。
-
-该确认通常只需完成一次。
-
-### Windows
-
-Windows 安装包尚未进行商业代码签名。如果 Microsoft Defender SmartScreen 出现提示：
-
-1. 点击“更多信息”。
-2. 点击“仍要运行”。
-3. 按安装向导完成安装。
-
-### Linux
-
-- AppImage：执行 `chmod +x DeepSeek-Harness-Desktop-*.AppImage` 后直接运行。
-- Debian / Ubuntu：使用系统软件安装器打开 deb，或运行 `sudo apt install ./DeepSeek-Harness-Desktop-*.deb`。
+---
 
 ## 安全模型
 
-- Harness 服务仅绑定 `127.0.0.1`，每次启动使用随机端口
-- Renderer 禁用 Node.js 集成
-- 启用 `contextIsolation` 和 Chromium sandbox
-- 新窗口和跨域导航交由系统浏览器处理
-- Harness 在独立的 Electron Node 子进程中运行
-- Cordis HMR 所需的 `--expose-internals` 只授予 Harness 子进程，不暴露给 Renderer
-- 插件市场的写操作要求同源请求，安装来源限制为经过整理的目录
-- 第三方插件安装后仍会以当前用户权限执行
+- 内核只绑定 `127.0.0.1` 的随机端口
+- 渲染进程禁用 Node.js 集成
+- 启用 `contextIsolation` 与 Chromium 沙箱
+- 新窗口和跨域导航一律交给系统浏览器
+- 内核运行在独立的 Electron Node 子进程中
+- Cordis HMR 所需的 `--expose-internals` 权限只授予内核子进程
+- Plugin Market 的写操作要求同源请求，安装来源限制在经过整理的目录内
+- 启动 URL 中的 token 只在回环地址下被接受
+- 第三方插件安装后仍以当前用户权限执行
 
-## 运行架构
+---
+
+## 运行时架构
 
 ```text
 DeepSeek Harness Desktop
 ├── Electron Main
 │   ├── 单实例窗口
-│   ├── Harness 子进程生命周期
+│   ├── 内核子进程生命周期
 │   ├── 随机回环端口与就绪检测
-│   └── 平台菜单和外部链接处理
+│   └── 平台菜单与外部链接处理
 │
-├── Harness Child Process
+├── Harness 子进程
 │   └── @deepseek-ai/dsh web
-│       └── http://127.0.0.1:<random-port>
+│       └── http://127.0.0.1:<random-port>/?token=<launch-token>
 │
-└── Sandboxed BrowserWindow
+└── 沙箱化 BrowserWindow
     └── DeepSeek Harness Web UI
 ```
 
-## 当前验证状态
+启动契约（外壳实际执行的命令）：
 
-| 平台 | 构建 | 打包后启动 | Web UI |
-| --- | --- | --- | --- |
-| macOS Apple Silicon | DMG / ZIP 通过 | 通过 | HTTP 200 |
-| macOS Intel | DMG / ZIP 通过 | 通过 | HTTP 200 |
-| Windows x64 | NSIS / ZIP 通过 | 通过 | HTTP 200 |
-| Linux x64 | AppImage / deb 通过 | 通过 | HTTP 200 |
+```text
+dsh --expose-internals <entry> \
+    --profile web \
+    --patch config/plugin-market.patch.yml \
+    --patch config/windows-directory-picker.patch.yml \
+    --host 127.0.0.1 --port 0 --no-open
+```
 
-所有发行包都由匹配平台的 GitHub-hosted runner 构建，并在发布前执行打包后 smoke test。
+---
+
+## 从源码构建
+
+需要 Node.js 20+ 与 pnpm。
+
+```bash
+git clone https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5.git
+cd deepseek-harness-desktop-0.1.5
+npm ci
+node scripts/install-dshmarket.mjs      # 注入插件市场（见上文说明）
+npm run dist:win                        # 生成 NSIS 安装程序 + 便携 ZIP
+```
+
+如果 Electron 或 electron-builder 的二进制下载缓慢，可设置镜像：
+
+```bash
+ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
+ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
+```
+
+### 测试
+
+```bash
+node test/dsh-service.test.js
+node test/prepare-dependencies.test.js
+node test/sync-upstream.test.js
+node test/window-lifecycle.test.js
+node test/window-options.test.js
+node test/windows-titlebar.test.js
+node test/mac-titlebar.test.js
+```
+
+共 7 个文件 44 项断言，全部通过。
+
+> 注意：不要用 `node --test test/`。它会给每个测试文件 spawn 子进程，
+> 在某些受限环境中会因管道 `EPERM` 失败，逐个文件直接运行即可。
+
+---
+
+## 验证状态
+
+| 项目 | 结果 |
+| --- | --- |
+| 打包版内核启动 | 正常，输出带 token 的 ready URL |
+| HTTP 认证流程 | 无 token → `401`；带 token → `303` + `Set-Cookie`；带 cookie → `200`（约 28 KB，`<title>DeepSeek Harness`） |
+| profile 自动生成 | 483 个 junction，全部指向本应用自身 |
+| 删除 `profiles` 后重启 | 能自动重建，`node_modules` 文件数前后一致（27046） |
+| exe 元数据 | `ProductName = DeepSeek Harness 0.1.5`，图标已替换 |
+| 双击启动 | 实测通过 |
+| 单元测试 | 7 文件 44 项全过 |
+| Win10 兼容性 | PE 子系统版本 `10.0`，与上游 0.3.8 一致 |
+
+---
 
 ## 已知限制
 
-- 上游 DSH 仍是 RC 版本，接口和行为可能快速变化
-- macOS 尚未接入 Developer ID 和 notarization
-- Windows 尚未接入商业代码签名，首次启动可能出现 SmartScreen
-- 尚未提供 Windows ARM64 和 Linux ARM64 构建
-- 尚未集成自动更新
+- **只有 Windows x64 便携版**，本分支没有构建 macOS / Linux 包，也没有 NSIS 安装程序
+- 内核仍是 RC 版本，接口和行为可能快速变化
+- 未做商业代码签名，SmartScreen 可能提示
+- 未集成自动更新
+- 插件市场内的进程重启功能不可用（由桌面宿主接管生命周期）
+- 便携版必须手动运行一次 `install-shortcuts.cmd` 才会出现在开始菜单和搜索中
+
+---
+
+## 致敬与致谢
+
+这个分支能存在，完全是因为下面这些人和项目。**请优先给上游点 Star。**
+
+### 桌面外壳原作者 —— 本项目的直接基础
+
+- **[agent-earth/deepseek-harness-desktop](https://github.com/agent-earth/deepseek-harness-desktop)**
+  —— 桌面外壳上游，本分支基于其 **v0.3.8**。跨平台宿主层、单实例窗口、
+  就绪检测、托盘、安全模型、Plugin Market 集成、macOS / Linux 构建配置、
+  自动同步 workflow，全部出自这里。**MIT 许可。**
+- 上游官方网站：<https://deepseek-harness-desktop.vercel.app>
+
+### DeepSeek Harness 官方
+
+- **[deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)**
+  —— 官方 Agent Harness 内核，本项目对接 `@deepseek-ai/dsh@0.1.5-rc.2`。
+  模型、会话、设置、插件和 Agent 能力都由它提供。
+
+### 插件市场与插件目录
+
+- **[dsh-market/dsh-market](https://github.com/dsh-market/dsh-market)**
+  —— 插件市场本体，本项目内置 `dshmarket@1.50.0`。
+- **[awesome-dsh-plugin/awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)**
+  —— 经过整理的社区插件目录。
+- **<https://awesome-dsh-plugin.com>** —— 插件目录在线索引。
+
+### 底层依赖
+
+- **[Electron](https://www.electronjs.org/)** —— 桌面运行时（本项目使用 43.4.0）
+- **[pnpm](https://pnpm.io/)** —— 包管理器（本项目随包提供 10.34.5）
+- **[Cordis](https://github.com/shigma/cordis)** —— 插件框架，DeepSeek Harness 的「一切皆插件」架构基础
+
+### 其他
+
+- 应用图标使用上游 DeepSeek Harness Web favicon 中的黑色鲸鱼图案
+- 项目结构、文档措辞与安全模型描述沿用上游，以便日后合并上游改动
+
+---
 
 ## 上游版本与许可
 
-当前固定使用 `@deepseek-ai/dsh@0.1.1-rc.2`，以保证打包结果可复现。
+本分支固定使用 `@deepseek-ai/dsh@0.1.5-rc.2`，以保证打包结果可复现。
 
-桌面封装采用 [MIT License](LICENSE)。内置的 DeepSeek Harness、dsh-market 与 pnpm 同样采用 MIT License，其许可声明保存在 [`third-party-licenses`](third-party-licenses)。
+| 组件 | 版本 |
+| --- | --- |
+| dsh 内核 | `0.1.5-rc.2` |
+| 外壳上游 | `agent-earth/deepseek-harness-desktop` v0.3.8 |
+| 本分支版本号 | `0.3.8-dsh0.1.5rc2` |
+| Electron | 43.4.0 |
+| dshmarket | 1.50.0 |
+| pnpm | 10.34.5 |
 
-本项目与 DeepSeek 不存在隶属或官方合作关系。DeepSeek Harness 及相关名称的权利归其各自所有者所有。应用图标使用上游 DeepSeek Harness Web favicon 中的黑色鲸鱼图案。
+桌面外壳采用 [MIT License](LICENSE)。内置的 DeepSeek Harness、dsh-market 与 pnpm
+同样采用 MIT License，其许可声明保存在 [`third-party-licenses`](third-party-licenses)。
+
+本项目与 DeepSeek 官方无隶属关系，也未获得其背书。
+DeepSeek Harness 及相关名称归各自所有者所有。
