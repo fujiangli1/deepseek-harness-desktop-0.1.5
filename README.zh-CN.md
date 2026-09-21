@@ -89,8 +89,8 @@
 
 | 平台 | 架构 | 形式 | 说明 |
 | --- | --- | --- | --- |
-| Windows | x64 | **安装包（推荐）** | `DeepSeek-Harness-0.1.5-Setup.exe`，159 MB。**自动创建桌面与开始菜单快捷方式**，Windows 搜索直接可搜到 |
-| Windows | x64 | 便携 ZIP | `DeepSeek-Harness-0.1.5-portable.zip`，295 MB。解压即用，需手动跑一次 `install-shortcuts.cmd` |
+| Windows | x64 | **安装包（推荐）** | [下载](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-Setup.exe) `DeepSeek-Harness-0.1.5-Setup.exe`，159 MB。**自动创建桌面与开始菜单快捷方式**，Windows 搜索直接可搜到 |
+| Windows | x64 | 便携 ZIP | [下载](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-portable.zip) `DeepSeek-Harness-0.1.5-portable.zip`，240 MB。解压即用，需手动跑一次 `install-shortcuts.cmd` |
 
 全部版本见 [Releases](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases)。
 

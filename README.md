@@ -100,8 +100,8 @@ Two Windows x64 builds are provided; **the installer is recommended**.
 
 | Platform | Architecture | Format | Notes |
 | --- | --- | --- | --- |
-| Windows | x64 | **Installer (recommended)** | `DeepSeek-Harness-0.1.5-Setup.exe`, 159 MB. Creates the desktop and Start menu shortcuts itself, so Windows search finds it |
-| Windows | x64 | Portable ZIP | `DeepSeek-Harness-0.1.5-portable.zip`, 295 MB. Extract and run; needs one manual `install-shortcuts.cmd` |
+| Windows | x64 | **Installer (recommended)** | [Download](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-Setup.exe) `DeepSeek-Harness-0.1.5-Setup.exe`, 159 MB. Creates the desktop and Start menu shortcuts itself, so Windows search finds it |
+| Windows | x64 | Portable ZIP | [Download](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-portable.zip) `DeepSeek-Harness-0.1.5-portable.zip`, 240 MB. Extract and run; needs one manual `install-shortcuts.cmd` |
 
 All versions are listed on the [Releases page](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases).
 
