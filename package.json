@@ -1,21 +1,21 @@
-﻿{
+{
     "name":  "deepseek-harness-desktop",
     "version":  "0.3.8-dsh0.1.5rc2",
     "description":  "An unofficial desktop wrapper for DeepSeek Harness.",
     "type":  "module",
     "main":  "src/main.js",
     "author":  {
-                   "name":  "Steven",
-                   "email":  "96154058+steven-kid@users.noreply.github.com"
+                   "name":  "fujiangli1",
+                   "email":  "107928784+fujiangli1@users.noreply.github.com"
                },
     "license":  "MIT",
     "repository":  {
                        "type":  "git",
-                       "url":  "git+https://github.com/agent-earth/deepseek-harness-desktop.git"
+                       "url":  "git+https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5.git"
                    },
-    "homepage":  "https://deepseek-harness-desktop.vercel.app",
+    "homepage":  "https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5",
     "bugs":  {
-                 "url":  "https://github.com/agent-earth/deepseek-harness-desktop/issues"
+                 "url":  "https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/issues"
              },
     "scripts":  {
                     "start":  "electron .",
@@ -66,10 +66,12 @@
                         },
     "build":  {
                   "afterSign":  "scripts/after-pack.cjs",
-                  "appId":  "io.github.steven-kid.deepseek-harness-desktop",
-                  "productName":  "DeepSeek Harness",
+                  "appId":  "io.github.fujiangli1.deepseek-harness-desktop-0-1-5",
+                  "productName":  "DeepSeek Harness 0.1.5",
                   "artifactName":  "DeepSeek-Harness-Desktop-${version}-${arch}.${ext}",
                   "asar":  false,
+                  "npmRebuild":  false,
+                  "electronDist":  "node_modules/electron/dist",
                   "files":  [
                                 "src/**/*",
                                 "config/**/*",
@@ -114,7 +116,7 @@
                           },
                   "win":  {
                               "icon":  "assets/icon.ico",
-                              "artifactName":  "DeepSeek-Harness-Desktop-${version}-windows-${arch}.${ext}",
+                              "artifactName":  "DeepSeek-Harness-0.1.5-${version}-windows-${arch}.${ext}",
                               "target":  [
                                              {
                                                  "target":  "nsis",
@@ -135,7 +137,11 @@
                                "allowToChangeInstallationDirectory":  true,
                                "createDesktopShortcut":  true,
                                "createStartMenuShortcut":  true,
-                               "runAfterFinish":  false
+                               "shortcutName":  "DeepSeek Harness 0.1.5",
+                               "runAfterFinish":  false,
+                               "perMachine":  false,
+                               "deleteAppDataOnUninstall":  false,
+                               "artifactName":  "DeepSeek-Harness-0.1.5-Setup-${version}.${ext}"
                            },
                   "linux":  {
                                 "icon":  "assets/icon.png",

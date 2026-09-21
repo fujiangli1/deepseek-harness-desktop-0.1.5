@@ -184,11 +184,63 @@ class of mistake surfaces at install time rather than at boot.
 
 ---
 
+## Building the Windows installer (NSIS)
+
+`npm run dist:win` produces a real installer:
+
+```
+dist\DeepSeek-Harness-0.1.5-Setup-<version>.exe
+```
+
+Three settings make that reproducible on a machine with neither a current C++
+toolchain nor admin rights.
+
+- **`npmRebuild: false`.** electron-builder otherwise runs `@electron/rebuild`,
+  which drives node-gyp for `node-pty`. node-pty already ships prebuilt binaries
+  in `prebuilds/win32-x64/` (`conpty.node`, `OpenConsole.exe`) - the same files
+  the hand-assembled build shipped - so the rebuild is not merely redundant: it
+  fails on any machine whose Visual Studio is older than the one node-gyp
+  demands, and on any checkout whose path contains a space.
+- **`electronDist: "node_modules/electron/dist"`.** Pins packaging to the
+  Electron copy `npm install` already validated instead of re-downloading a
+  ~170 MB archive that can arrive truncated (a zero-entry zip produces a
+  `win-unpacked` missing `electron.exe`, and the failure surfaces much later as
+  `ENOENT ... rename electron.exe`). electron-builder logs `custom electronDist
+  provided but no zip found; assuming unpacked electron directory` and copies it.
+- **Fork-specific `appId` and `productName`**
+  (`io.github.fujiangli1.deepseek-harness-desktop-0-1-5`,
+  `DeepSeek Harness 0.1.5`). Upstream's values are shared with the stock 0.3.8
+  install, and the NSIS product GUID is derived from `appId` - so reusing them
+  would make this installer *upgrade or uninstall the user's existing 0.3.8*.
+  Distinct values let both installs coexist with separate uninstall entries,
+  install directories and shortcuts. `nsis.shortcutName` keeps the Start Menu
+  entry searchable under the versioned name.
+
+`winCodeSign` is the one artifact electron-builder cannot unpack by itself. The
+archive holds two symlinks under `darwin/10.12/lib/`, and creating symlinks on
+Windows requires admin or Developer Mode, so `7za x -snld` exits non-zero and the
+whole build fails. Extract it once without the symlink flag:
+
+```powershell
+$cache = "$env:LOCALAPPDATA\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0"
+& node_modules\7zip-bin\win\x64\7za.exe x winCodeSign-2.6.0.7z "-o$cache" -y
+```
+
+Only the two macOS dylibs fail; `windows-10\x64\signtool.exe` and
+`rcedit-x64.exe` land correctly, and electron-builder then reuses the cached copy
+without downloading. `nsis` and `nsis-resources` download normally.
+
+The installer is per-user (`perMachine: false`, no UAC) and assisted
+(`oneClick: false`), and creates both shortcuts, which is what finally puts the
+app in the Start Menu and therefore in Windows Search. `dsh-home` is
+deliberately absent from `files`: the installer carries no credentials, and the
+app creates its own home beside the executable on first boot.
+
 ## Packaging a runnable app without electron-builder
 
-`npm run pack` needs `app-builder.exe` and the `winCodeSign` binaries from
-electron-builder's own CDN, which is not always reachable. A runnable
-application directory can be assembled by hand instead:
+If electron-builder cannot run at all - its `app-builder.exe` helper is spawned
+with piped stdio, which a locked-down sandbox denies with `spawn EPERM` - a
+runnable application directory can be assembled by hand instead:
 
 1. copy `node_modules/electron/dist/**` to the output directory and rename
    `electron.exe` to the application name;
