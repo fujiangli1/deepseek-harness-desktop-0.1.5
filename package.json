@@ -81,6 +81,8 @@
                                 "assets/dsh-node.exe",
                                 "assets/windows-hidden-console.exe",
                                 "package.json",
+                                "install-shortcuts.cmd",
+                                "install-shortcuts.ps1",
                                 "LICENSE",
                                 "third-party-licenses/**/*",
                                 "node_modules/**/*"
