@@ -67,11 +67,12 @@ Full rationale, evidence, and upstream comparisons live in [`FORK-NOTES.md`](FOR
 | 1 | Ready-URL regex in `src/dsh-service.js` | Kernel `0.1.2+` appends a `?token=` auth parameter. The original pattern ended in `\b` and truncated the token, so the shell loaded an unauthenticated URL → **HTTP 401 → blank window.** The single most important change |
 | 2 | `scripts/prepare-dependencies.mjs` tolerates a missing `dsh-host-apiproxy` | Kernel `0.1.2` relocated that package; the script aborted installation on the missing file |
 | 3 | `APP_NAME` in `src/main.js` set to `DeepSeek Harness 0.1.5` | Electron derives the userData directory — and the single-instance lock — from the app name. Sharing upstream's name made this shell **exit silently (code 0, no output)** whenever the upstream app was running |
-| 4 | New `resolveDshHome()` in `src/main.js` | A double-clicked launch sets no `DSH_HOME`, so the kernel fell back to the shared `~/.dsh`, which pins the 0.1.1 packages and loads the wrong version |
+| 4 | New `resolveDshHome()` in `src/dsh-home.js` | A double-clicked launch sets no `DSH_HOME`, so the kernel fell back to the shared `~/.dsh`, which pins the 0.1.1 packages and loads the wrong version. The home lives under `userData` for installed builds — the installer replaces its installation directory on upgrade — and beside the executable for portable ones |
 | 5 | Windows system directories appended to `PATH` in `src/dsh-service.js` | On some machines `System32` is absent from `PATH`, so any plugin spawning a bare `powershell.exe` failed with `ENOENT` |
 | 6 | `READY_PATTERN` captures the token while still accepting loopback URLs only | An upstream test asserts that LAN URLs must resolve to `undefined`; the fix must not weaken that constraint |
 | 7 | New `install-shortcuts.cmd` / `install-shortcuts.ps1` | A portable build has no installer, so Windows creates no desktop or Start menu entry and search cannot find the app. The script adds both, and `-Remove` undoes it |
 | 8 | `scripts/install-dshmarket.mjs` | Every published dshmarket release declares a peer range that excludes `0.1.5-rc.2`, so `npm install` fails with `ERESOLVE`. The market is injected during packaging instead |
+| 9 | Ten dsh interface packages declared in `package.json` | electron-builder keeps only what the dependency graph reaches, and these are peers of the `-local` / `-file` implementations, so it pruned them and the packaged app died with `Cannot find package '@deepseek-ai/dsh-jobs'` |
 
 ### About the plugin market (dshmarket)
 
@@ -95,15 +96,36 @@ startup with `Cannot find package 'undici' imported from dshmarket/lib/net.js`.
 
 ## Download and install
 
-This fork currently provides a **Windows x64 portable build only**.
+Two Windows x64 builds are provided; **the installer is recommended**.
 
-| Platform | Architecture | Format | Download |
+| Platform | Architecture | Format | Notes |
 | --- | --- | --- | --- |
-| Windows | x64 | Portable ZIP | [Download the portable build](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-portable.zip) |
+| Windows | x64 | **Installer (recommended)** | `DeepSeek-Harness-0.1.5-Setup.exe`, 159 MB. Creates the desktop and Start menu shortcuts itself, so Windows search finds it |
+| Windows | x64 | Portable ZIP | `DeepSeek-Harness-0.1.5-portable.zip`, 295 MB. Extract and run; needs one manual `install-shortcuts.cmd` |
 
 All versions are listed on the [Releases page](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases).
 
-### Steps
+### Installer (recommended)
+
+1. Double-click `DeepSeek-Harness-0.1.5-Setup.exe`
+   - Per-user install, **no UAC prompt**, and the target directory is selectable
+   - Microsoft Defender SmartScreen may intervene: click **More info → Run anyway**
+2. The desktop icon and the Start menu entry appear immediately, so **Windows search finds
+   "DeepSeek Harness 0.1.5"**
+3. First launch takes roughly 10 seconds while the profile and 483 junctions are built
+4. Uninstall from **Settings → Apps**, or with `Uninstall DeepSeek Harness 0.1.5.exe` in the
+   installation directory
+
+> [!IMPORTANT]
+> The installer carries **no API credentials**. Enter your own keys in Settings after the
+> first launch.
+
+> [!NOTE]
+> The fork uses its own `appId` and product name, so it **coexists with the upstream 0.3.8
+> install**: separate installation directory, shortcuts, and uninstall entry. Upgrading this
+> fork never touches the upstream one.
+
+### Portable build
 
 1. Extract somewhere **you will not casually delete**, e.g. `D:\DeepSeek Harness 0.1.5\`
    - About 675 MB once extracted
@@ -118,10 +140,16 @@ All versions are listed on the [Releases page](https://github.com/fujiangli1/dee
 
 ### About `DSH_HOME`
 
-The application derives `DSH_HOME` as **the executable's directory** plus `dsh-home`,
-so **the whole folder can be moved or given a different drive letter with no
-configuration changes.** Re-run `install-shortcuts.cmd` afterwards so the shortcuts
-point at the new location.
+The application derives `DSH_HOME` itself, and where it points depends on how the build was
+shipped:
+
+| Build | `dsh-home` location | Why |
+| --- | --- | --- |
+| Installer | `%APPDATA%\DeepSeek Harness 0.1.5\dsh-home` | the installer replaces the installation directory on upgrade, so a home beside the executable would be destroyed by the next version |
+| Portable | beside the executable | keeps the folder self-contained and movable, with no configuration changes |
+
+Re-run `install-shortcuts.cmd` after moving a portable build so the shortcuts point at the
+new location.
 
 > [!NOTE]
 > The first launch creates `profiles\` under `dsh-home\`, which contains **absolute-path
@@ -249,6 +277,7 @@ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-
 ### Tests
 
 ```bash
+node test/dsh-home.test.js
 node test/dsh-service.test.js
 node test/prepare-dependencies.test.js
 node test/sync-upstream.test.js
@@ -258,7 +287,7 @@ node test/windows-titlebar.test.js
 node test/mac-titlebar.test.js
 ```
 
-7 files, 44 assertions, all passing.
+8 files, 50 assertions, all passing.
 
 > Do not use `node --test test/`. It spawns a child process per test file, which fails
 > with a piped-stdio `EPERM` in some restricted environments. Run each file directly.
@@ -275,19 +304,23 @@ node test/mac-titlebar.test.js
 | Delete `profiles` and restart | Rebuilds correctly; `node_modules` file count unchanged (27046) |
 | Executable metadata | `ProductName = DeepSeek Harness 0.1.5`, icon replaced |
 | Double-click launch | Passed on a real machine |
-| Unit tests | 7 files, 44 assertions, all passing |
+| **NSIS installer** | Two consecutive installs exit 0; desktop and Start menu shortcuts created and pointing at the installed copy; separate uninstall entry alongside 0.3.8; no credentials in the installation directory |
+| **Upgrade safety** | `dsh-home` lives under `%APPDATA%\DeepSeek Harness 0.1.5\` and survives a reinstall, credentials and settings included |
+| **Coexistence with 0.3.8** | The upstream install is untouched across installs — 19799 files before and after, unchanged mtime |
+| Unit tests | 8 files, 50 assertions, all passing |
 | Windows 10 compatibility | PE subsystem version `10.0`, same as upstream 0.3.8 |
 
 ---
 
 ## Known limitations
 
-- **Windows x64 portable build only** — this fork builds no macOS or Linux packages and
-  no NSIS installer
+- **Windows x64 only** — this fork builds no macOS or Linux packages
 - The kernel is still an RC release and may change rapidly
 - No commercial code signing, so SmartScreen may appear
 - Automatic updates are not integrated
 - Market-triggered process restart is unavailable (the desktop host owns the lifecycle)
+- **The installer ships no API credentials**; enter your own keys in Settings after the
+  first launch
 - The portable build appears in Start menu and search only after running
   `install-shortcuts.cmd` once
 

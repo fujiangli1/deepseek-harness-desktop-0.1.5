@@ -85,15 +85,32 @@
 
 ## 下载与安装
 
-本分支目前只提供 **Windows x64 便携版**。
+本分支提供两种 Windows x64 形式，**推荐安装包**。
 
-| 平台 | 架构 | 形式 | 下载 |
+| 平台 | 架构 | 形式 | 说明 |
 | --- | --- | --- | --- |
-| Windows | x64 | 便携 ZIP | [下载便携版](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases/latest/download/DeepSeek-Harness-0.1.5-portable.zip) |
+| Windows | x64 | **安装包（推荐）** | `DeepSeek-Harness-0.1.5-Setup.exe`，159 MB。**自动创建桌面与开始菜单快捷方式**，Windows 搜索直接可搜到 |
+| Windows | x64 | 便携 ZIP | `DeepSeek-Harness-0.1.5-portable.zip`，295 MB。解压即用，需手动跑一次 `install-shortcuts.cmd` |
 
 全部版本见 [Releases](https://github.com/fujiangli1/deepseek-harness-desktop-0.1.5/releases)。
 
-### 使用步骤
+### 安装包（推荐）
+
+1. 双击 `DeepSeek-Harness-0.1.5-Setup.exe`
+   - **逐用户安装，不弹 UAC**，可以改安装目录
+   - Windows Defender SmartScreen 可能拦截：点 **更多信息 → 仍要运行**
+2. 装完桌面就有图标，开始菜单里也有条目 —— **Windows 搜索能直接搜到「DeepSeek Harness 0.1.5」**
+3. 首次启动约 10 秒（要在 `dsh-home` 下创建 profile 和 483 个 junction）
+4. 卸载走「设置 → 应用」，或用安装目录里的 `Uninstall DeepSeek Harness 0.1.5.exe`
+
+> [!IMPORTANT]
+> 安装包**不含任何 API 密钥**。首次启动后请在设置里填入你自己的密钥。
+
+> [!NOTE]
+> 本分支使用独立的 `appId` 与产品名，因此**与原版 0.3.8 完全并存**：
+> 各自的安装目录、快捷方式、卸载条目互不影响，升级本分支也不会动到原版。
+
+### 便携版
 
 1. 解压到一个**你不会随手删掉的目录**，例如 `D:\DeepSeek Harness 0.1.5\`
    - 目录路径建议不要有中文以外的特殊字符
@@ -108,9 +125,14 @@
 
 ### 关于 `DSH_HOME`
 
-程序自动把 `DSH_HOME` 推导为「**exe 所在目录** + `dsh-home`」，
-所以**整个文件夹可以随意移动或改盘符，不需要改任何配置**。
-移动位置后重新运行一次 `install-shortcuts.cmd` 即可让快捷方式指向新位置。
+程序自动推导 `DSH_HOME`，**按发布形态分流**：
+
+| 形态 | `dsh-home` 位置 | 原因 |
+| --- | --- | --- |
+| 安装版 | `%APPDATA%\DeepSeek Harness 0.1.5\dsh-home` | 安装程序升级时会整体替换安装目录，放在 exe 旁边会被清掉 |
+| 便携版 | exe 同目录 | 保持自包含、可随意移动或改盘符 |
+
+移动便携版目录后重新运行一次 `install-shortcuts.cmd` 即可让快捷方式指向新位置。
 
 > [!NOTE]
 > 首次启动会在 `dsh-home\` 下生成 `profiles\`，里面是指向本应用 `node_modules` 的**绝对路径 junction**。
@@ -230,6 +252,7 @@ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-
 ### 测试
 
 ```bash
+node test/dsh-home.test.js
 node test/dsh-service.test.js
 node test/prepare-dependencies.test.js
 node test/sync-upstream.test.js
@@ -239,7 +262,7 @@ node test/windows-titlebar.test.js
 node test/mac-titlebar.test.js
 ```
 
-共 7 个文件 44 项断言，全部通过。
+共 8 个文件 50 项断言，全部通过。
 
 > 注意：不要用 `node --test test/`。它会给每个测试文件 spawn 子进程，
 > 在某些受限环境中会因管道 `EPERM` 失败，逐个文件直接运行即可。
@@ -256,18 +279,22 @@ node test/mac-titlebar.test.js
 | 删除 `profiles` 后重启 | 能自动重建，`node_modules` 文件数前后一致（27046） |
 | exe 元数据 | `ProductName = DeepSeek Harness 0.1.5`，图标已替换 |
 | 双击启动 | 实测通过 |
-| 单元测试 | 7 文件 44 项全过 |
+| **NSIS 安装包** | 连续安装两次均 exit 0；桌面 + 开始菜单快捷方式自动创建且指向安装位置；卸载条目与 0.3.8 并存；安装目录不含密钥 |
+| **升级不丢数据** | `dsh-home` 落在 `%APPDATA%\DeepSeek Harness 0.1.5\`，连装两次凭据与设置仍在 |
+| **与原版共存** | 安装前后 0.3.8 目录文件数 `19799 → 19799`、时间戳未变 |
+| 单元测试 | 8 文件 50 项全过 |
 | Win10 兼容性 | PE 子系统版本 `10.0`，与上游 0.3.8 一致 |
 
 ---
 
 ## 已知限制
 
-- **只有 Windows x64 便携版**，本分支没有构建 macOS / Linux 包，也没有 NSIS 安装程序
+- **只有 Windows x64**，本分支没有构建 macOS / Linux 包
 - 内核仍是 RC 版本，接口和行为可能快速变化
 - 未做商业代码签名，SmartScreen 可能提示
 - 未集成自动更新
 - 插件市场内的进程重启功能不可用（由桌面宿主接管生命周期）
+- **安装包不含 API 密钥**，首次启动后需自行在设置里填写
 - 便携版必须手动运行一次 `install-shortcuts.cmd` 才会出现在开始菜单和搜索中
 
 ---
