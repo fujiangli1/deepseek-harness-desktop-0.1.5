@@ -81,11 +81,19 @@ shared `~/.dsh`. That home is not inherently wrong, but its profile pins
 whichever core was installed there and dsh may rewrite it in place, so a fork
 running a different core must not share it.
 
-`resolveDshHome()` in `src/main.js` prefers a `dsh-home` directory beside the
-executable, which keeps the folder self-contained and movable, and falls back to
-Electron's `userData` directory when the application directory is not writable -
-as happens for an installation under `Program Files`. An explicitly exported
-`DSH_HOME` always wins, so the existing launcher scripts keep working unchanged.
+`resolveDshHome()` in `src/dsh-home.js` picks the home according to how the build
+was shipped, because the two shapes have opposite requirements:
+
+| Build | Home | Why |
+|---|---|---|
+| installed (NSIS) | `userData/dsh-home` | the installer replaces the installation directory wholesale on upgrade, so a home beside the executable - credentials, settings and every session with it - does not survive the next version |
+| portable | `<exe dir>/dsh-home` | keeps the folder self-contained and movable |
+| anywhere else, e.g. under `Program Files` | `userData/dsh-home` | the application directory is not writable |
+
+What marks a build as installed is the `Uninstall <product>.exe` that the NSIS
+installer drops beside the executable; neither the portable build nor the
+development tree has one. An explicitly exported `DSH_HOME` still wins, so the
+existing launcher scripts keep working unchanged.
 
 ### The Windows system directories are appended to the child `PATH`
 
@@ -181,6 +189,43 @@ they are the application's, because the application bundles the market.
 `install-dshmarket.mjs` verifies each of dshmarket's declared dependencies
 resolves from the target and fails with a message naming the culprit, so this
 class of mistake surfaces at install time rather than at boot.
+
+### The dsh plugin interface packages must be declared too
+
+electron-builder does not copy `node_modules` verbatim. It walks the dependency
+graph from `package.json` and keeps only what that graph reaches, so a package
+that is present solely because something else declared it as a *peer* dependency
+is dropped. Ten dsh packages sit in exactly that position - the `-local` and
+`-file` implementations declare them as peers, and the wrapper never did:
+
+```
+dsh-attachment           dsh-authorization        dsh-hook-protocol
+dsh-jobs                 dsh-sdk-protocol         dsh-session-persistence
+dsh-session-query        dsh-settings             dsh-util-time
+dsh-util-workspace-path
+```
+
+A hand-assembled build keeps them, because `npm ci --omit=dev` installs whatever
+the lockfile resolves. That is why the first electron-builder installer *looked*
+complete - 230 of the expected 240 `@deepseek-ai` packages, 16656 files, a
+correct-looking install with working shortcuts - and then died the moment the
+core started:
+
+```
+Error: dsh: plugin tree failed to load: failed to apply loader entry include (cordis:include)
+Cannot find package '@deepseek-ai/dsh-jobs' imported from .../dsh-jobs-local/lib/index.js
+```
+
+All ten are now declared in `dependencies` at `0.1.5-rc.2`, and the packaged tree
+matches the hand-assembled one exactly: 240 `@deepseek-ai` packages, no
+difference in either direction. The remaining file-count gap (16626 vs 27046) is
+electron-builder's default exclusions - `test/`, `*.map`, `.bin` - none of which
+are runtime files.
+
+The lesson generalises: **a dependency that only the plugin tree needs must still
+be declared in `package.json`, or electron-builder will prune it.** Verify a
+packaged build by comparing package *sets* against a hand-assembled tree, not by
+counting files.
 
 ---
 

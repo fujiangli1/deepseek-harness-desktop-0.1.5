@@ -1,4 +1,3 @@
-import { accessSync, constants } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -11,6 +10,7 @@ import {
   shell,
   Tray,
 } from 'electron'
+import { resolveDshHome } from './dsh-home.js'
 import { startDshService } from './dsh-service.js'
 import { applyMacTitleBarStyle } from './mac-titlebar.js'
 import { createWindowOptions } from './window-options.js'
@@ -35,26 +35,7 @@ let isQuitting = false
 
 app.setName(APP_NAME)
 
-// A packaged build is normally started by double-clicking its executable, so
-// nothing has exported DSH_HOME and dsh would fall back to the shared ~/.dsh.
-// That home is not necessarily wrong, but its profile pins whichever core was
-// installed there, and dsh may rewrite it in place - so a fork running a
-// different core must not share it.
-//
-// Prefer a home beside the executable, which keeps the folder self-contained
-// and movable. Fall back to userData when the application directory is not
-// writable, as happens for an installation under Program Files. An explicit
-// DSH_HOME always wins.
-export function resolveDshHome(environment = process.env, executablePath = app.getPath('exe')) {
-  if (environment.DSH_HOME) return environment.DSH_HOME
-  const appDirectory = path.dirname(executablePath)
-  try {
-    accessSync(appDirectory, constants.W_OK)
-    return path.join(appDirectory, 'dsh-home')
-  } catch {
-    return path.join(app.getPath('userData'), 'dsh-home')
-  }
-}
+
 
 async function showMainWindow() {
   if (!mainWindow) {
@@ -145,7 +126,10 @@ async function launch() {
     console.warn(`System tray is unavailable: ${error instanceof Error ? error.message : String(error)}`)
   }
 
-  const dshHome = resolveDshHome()
+  const dshHome = resolveDshHome({
+    executablePath: app.getPath('exe'),
+    userDataPath: app.getPath('userData'),
+  })
   console.log(`${APP_NAME} starting with DSH_HOME=${dshHome}`)
 
   service = startDshService({
