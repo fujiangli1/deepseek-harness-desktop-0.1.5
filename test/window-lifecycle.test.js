@@ -52,10 +52,18 @@ test('tray menu falls back to English labels', () => {
   ])
 })
 
-test('startup screen contains only the logo and loading indicator', async () => {
+test('startup screen stays minimal but now explains a slow first launch', async () => {
   const html = await readFile(new URL('../src/startup.html', import.meta.url), 'utf8')
 
   assert.match(html, /trayTemplate@2x\.png/)
   assert.match(html, /class="progress"/)
-  assert.doesNotMatch(html, /<h1|<p/)
+  // The kernel prints nothing until it is ready, so this screen is the only
+  // signal the user gets. It used to be wordless, which made a slow first
+  // launch - the reported "did not become ready within 60000ms" - impossible to
+  // tell apart from a hung one. Keep the status line and the elapsed counter.
+  assert.match(html, /id="hint"/)
+  assert.match(html, /id="elapsed"/)
+  assert.match(html, /第一次启动/)
+  // Still a splash screen rather than a page: no heading.
+  assert.doesNotMatch(html, /<h1/)
 })

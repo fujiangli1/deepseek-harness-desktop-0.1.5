@@ -118,6 +118,53 @@ function createTray() {
   trayAvailable = true
 }
 
+// Where the kernel's own output is kept. A launch that fails now leaves this
+// behind instead of vanishing with the dialog.
+function kernelLogPath() {
+  return path.join(app.getPath('userData'), 'dsh-kernel.log')
+}
+
+function startKernel(dshHome) {
+  service = startDshService({
+    electronExecutable: process.execPath,
+    environment: {
+      ...process.env,
+      NODE_OPTIONS: '',
+      DSH_DESKTOP: '1',
+      DSH_HOME: dshHome,
+    },
+    logPath: kernelLogPath(),
+  })
+  return service.ready
+}
+
+// A first launch can genuinely take minutes: the profile has to be built before
+// the kernel loads its plugin tree, and the kernel announces nothing until it is
+// done. Offer a way forward rather than a dead end, and point at the log for the
+// case where retrying is not the answer. Returns the chosen button index:
+// 0 try again, 1 open the log folder, 2 quit.
+async function askAfterFailedStart(message) {
+  const chinese = app.getLocale().toLowerCase().startsWith('zh')
+  const buttons = chinese
+    ? ['重试', '打开日志文件夹', '退出']
+    : ['Try again', 'Open log folder', 'Quit']
+  const hint = chinese
+    ? '如果这是第一次启动，初始化可能需要几分钟，重试通常就能成功。'
+    : 'If this is the first launch, initialisation can take several minutes; trying again usually succeeds.'
+
+  const { response } = await dialog.showMessageBox({
+    type: 'error',
+    title: chinese ? `${APP_NAME} 启动失败` : `${APP_NAME} failed to start`,
+    message: chinese ? 'DeepSeek Harness 无法启动。' : 'DeepSeek Harness could not start.',
+    detail: `${message}\n\n${hint}`,
+    buttons,
+    defaultId: 0,
+    cancelId: buttons.length - 1,
+    noLink: true,
+  })
+  return response
+}
+
 async function launch() {
   const startupReady = createWindow()
   try {
@@ -132,30 +179,24 @@ async function launch() {
   })
   console.log(`${APP_NAME} starting with DSH_HOME=${dshHome}`)
 
-  service = startDshService({
-    electronExecutable: process.execPath,
-    environment: {
-      ...process.env,
-      NODE_OPTIONS: '',
-      DSH_DESKTOP: '1',
-      DSH_HOME: dshHome,
-    },
-  })
-
-  try {
-    serviceUrl = await service.ready
-    await startupReady
-    await mainWindow?.loadURL(serviceUrl)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    await dialog.showMessageBox({
-      type: 'error',
-      title: `${APP_NAME} failed to start`,
-      message: 'DeepSeek Harness could not start.',
-      detail: message,
-    })
-    app.quit()
+  for (;;) {
+    try {
+      serviceUrl = await startKernel(dshHome)
+      break
+    } catch (error) {
+      service?.stop()
+      const choice = await askAfterFailedStart(error instanceof Error ? error.message : String(error))
+      if (choice === 2) {
+        app.quit()
+        return
+      }
+      if (choice === 1) shell.showItemInFolder(kernelLogPath())
+      // Both "try again" and "open the log folder" land back in the loop.
+    }
   }
+
+  await startupReady
+  await mainWindow?.loadURL(serviceUrl)
 }
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock()

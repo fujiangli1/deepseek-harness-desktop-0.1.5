@@ -304,6 +304,42 @@ runnable application directory can be assembled by hand instead:
 
 ---
 
+## Startup timeout and diagnostics
+
+The shell used to give the kernel 60s to print its ready URL and kill it
+otherwise. That is only 3.5x the measured cold start on a warm developer machine
+(~17s), and a first launch has real work to do: 483 junctions into the bundled
+`node_modules`, then the whole plugin tree. On a slower disk, or with an
+antivirus scanning every file in the installation, 60s is not enough - and the
+resulting failure was close to undiagnosable:
+
+- the kernel prints **nothing** until it is ready, so the dialog's `${output}`
+  was empty and the user saw only "did not become ready within 60000ms";
+- nothing was written to disk, so there was no evidence to inspect afterwards;
+- the dialog had a single button, so the only option was to give up.
+
+| Change | Why |
+| --- | --- |
+| `DEFAULT_READY_TIMEOUT_MS` is 300s | A slow first launch is not a failure. Measured cold start is ~17s, which leaves a wide margin |
+| Every byte the kernel prints is teed to `dsh-kernel.log` under `userData` | A failed launch now leaves evidence. The file is rewritten per launch, so it always describes the latest attempt |
+| The failure dialog offers 重试 / 打开日志文件夹 / 退出 | Retrying genuinely works, because a partial profile build persists. Measured: interrupted at 8.5s - with all 483 junctions already on disk - the next launch was ready in 2.8s |
+
+`describeKernelOutput()` keeps the tail of a long dump, since the real error sits
+at the end of a plugin-tree dump, and says so explicitly when the kernel printed
+nothing at all - because silence means "still initialising", not "crashed".
+
+The startup screen stopped being wordless too. It names the current stage, counts
+the seconds, and after a minute explains that a first launch can take several
+minutes. A wordless spinner is precisely what made a slow launch look like a hung
+one.
+
+> Windows detail: `windows-hidden-console.exe` puts the kernel in a job object
+> with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, so terminating the launcher takes
+> the kernel and its descendants with it. A failed launch does not leave an
+> orphaned kernel holding the profile - which is why retrying is safe.
+
+---
+
 ## Tests
 
 Upstream suite plus three cases covering the token fix in

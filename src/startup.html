@@ -79,6 +79,21 @@
         }
       }
 
+      .hint {
+        max-width: 330px;
+        margin: 22px 0 0;
+        color: rgba(0, 0, 0, 0.55);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .elapsed {
+        margin: 8px 0 0;
+        color: rgba(0, 0, 0, 0.35);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .progress::after {
           width: 100%;
@@ -97,6 +112,14 @@
         .mark img {
           filter: invert(1);
         }
+
+        .hint {
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .elapsed {
+          color: rgba(255, 255, 255, 0.4);
+        }
       }
     </style>
   </head>
@@ -106,12 +129,50 @@
         <img src="../assets/trayTemplate@2x.png" alt="DeepSeek Harness" />
       </div>
       <div class="progress" id="progress" aria-label="正在启动"></div>
+      <p class="hint" id="hint">正在启动 DeepSeek Harness…</p>
+      <p class="elapsed" id="elapsed"></p>
     </main>
     <script>
-      if (!navigator.language.toLowerCase().startsWith("zh")) {
-        document.documentElement.lang = "en";
-        document.querySelector("#progress").setAttribute("aria-label", "Starting");
+      // The kernel prints nothing until it is ready, so this window is the only
+      // thing telling the user that anything is happening. Say what is going on
+      // and how long they have waited, because a silent first launch used to be
+      // indistinguishable from a hung one.
+      const chinese = navigator.language.toLowerCase().startsWith("zh");
+      if (!chinese) document.documentElement.lang = "en";
+      document.querySelector("#progress").setAttribute("aria-label", chinese ? "正在启动" : "Starting");
+
+      const stages = chinese
+        ? [
+            [0, "正在启动 DeepSeek Harness…"],
+            [12, "正在加载插件树…"],
+            [60, "第一次启动需要创建运行环境，可能要几分钟，请再等一会儿。"],
+            [150, "仍在初始化。若长时间没有进展，请检查杀毒软件是否正在扫描安装目录。"],
+            [260, "还在等待。可以继续等，也可以退出后重新打开——重试通常更快。"],
+          ]
+        : [
+            [0, "Starting DeepSeek Harness…"],
+            [12, "Loading the plugin tree…"],
+            [60, "The first launch has to build its runtime; this can take several minutes."],
+            [150, "Still initialising. If it never progresses, check whether antivirus is scanning the installation."],
+            [260, "Still waiting. You can keep waiting, or quit and start again — retrying is usually faster."],
+          ];
+
+      const hint = document.querySelector("#hint");
+      const elapsed = document.querySelector("#elapsed");
+      const startedAt = Date.now();
+
+      function render() {
+        const seconds = Math.floor((Date.now() - startedAt) / 1000);
+        let text = stages[0][1];
+        for (const [at, message] of stages) {
+          if (seconds >= at) text = message;
+        }
+        hint.textContent = text;
+        elapsed.textContent = chinese ? "已等待 " + seconds + " 秒" : seconds + "s";
       }
+
+      render();
+      setInterval(render, 1000);
     </script>
   </body>
 </html>

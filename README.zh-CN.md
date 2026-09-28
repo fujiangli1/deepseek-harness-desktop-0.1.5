@@ -254,6 +254,7 @@ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-
 ```bash
 node test/dsh-home.test.js
 node test/dsh-service.test.js
+node test/dsh-service-start.test.js
 node test/prepare-dependencies.test.js
 node test/sync-upstream.test.js
 node test/window-lifecycle.test.js
@@ -262,7 +263,7 @@ node test/windows-titlebar.test.js
 node test/mac-titlebar.test.js
 ```
 
-共 8 个文件 50 项断言，全部通过。
+共 9 个文件 55 项断言，全部通过。
 
 > 注意：不要用 `node --test test/`。它会给每个测试文件 spawn 子进程，
 > 在某些受限环境中会因管道 `EPERM` 失败，逐个文件直接运行即可。
@@ -282,7 +283,8 @@ node test/mac-titlebar.test.js
 | **NSIS 安装包** | 连续安装两次均 exit 0；桌面 + 开始菜单快捷方式自动创建且指向安装位置；卸载条目与 0.3.8 并存；安装目录不含密钥 |
 | **升级不丢数据** | `dsh-home` 落在 `%APPDATA%\DeepSeek Harness 0.1.5\`，连装两次凭据与设置仍在 |
 | **与原版共存** | 安装前后 0.3.8 目录文件数 `19799 → 19799`、时间戳未变 |
-| 单元测试 | 8 文件 50 项全过 |
+| 单元测试 | 9 文件 55 项全过 |
+| **启动诊断** | 就绪超时放宽到 300 秒；内核输出落盘到 `dsh-kernel.log`；失败弹窗提供「重试 / 打开日志文件夹 / 退出」 |
 | Win10 兼容性 | PE 子系统版本 `10.0`，与上游 0.3.8 一致 |
 
 ---

@@ -73,6 +73,7 @@ Full rationale, evidence, and upstream comparisons live in [`FORK-NOTES.md`](FOR
 | 7 | New `install-shortcuts.cmd` / `install-shortcuts.ps1` | A portable build has no installer, so Windows creates no desktop or Start menu entry and search cannot find the app. The script adds both, and `-Remove` undoes it |
 | 8 | `scripts/install-dshmarket.mjs` | Every published dshmarket release declares a peer range that excludes `0.1.5-rc.2`, so `npm install` fails with `ERESOLVE`. The market is injected during packaging instead |
 | 9 | Ten dsh interface packages declared in `package.json` | electron-builder keeps only what the dependency graph reaches, and these are peers of the `-local` / `-file` implementations, so it pruned them and the packaged app died with `Cannot find package '@deepseek-ai/dsh-jobs'` |
+| 10 | Ready timeout raised to 300s, kernel output logged to `dsh-kernel.log`, failure dialog offers retry / open log / quit | A first launch builds 483 junctions before the kernel loads its plugin tree, and the kernel prints nothing until it is ready. 60s turned a merely slow first start into "could not start", with an empty dialog and nothing on disk to inspect |
 
 ### About the plugin market (dshmarket)
 
@@ -279,6 +280,7 @@ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-
 ```bash
 node test/dsh-home.test.js
 node test/dsh-service.test.js
+node test/dsh-service-start.test.js
 node test/prepare-dependencies.test.js
 node test/sync-upstream.test.js
 node test/window-lifecycle.test.js
@@ -287,7 +289,7 @@ node test/windows-titlebar.test.js
 node test/mac-titlebar.test.js
 ```
 
-8 files, 50 assertions, all passing.
+9 files, 55 assertions, all passing.
 
 > Do not use `node --test test/`. It spawns a child process per test file, which fails
 > with a piped-stdio `EPERM` in some restricted environments. Run each file directly.
@@ -307,7 +309,8 @@ node test/mac-titlebar.test.js
 | **NSIS installer** | Two consecutive installs exit 0; desktop and Start menu shortcuts created and pointing at the installed copy; separate uninstall entry alongside 0.3.8; no credentials in the installation directory |
 | **Upgrade safety** | `dsh-home` lives under `%APPDATA%\DeepSeek Harness 0.1.5\` and survives a reinstall, credentials and settings included |
 | **Coexistence with 0.3.8** | The upstream install is untouched across installs — 19799 files before and after, unchanged mtime |
-| Unit tests | 8 files, 50 assertions, all passing |
+| Unit tests | 9 files, 55 assertions, all passing |
+| Startup diagnostics | 300s ready timeout; kernel output teed to `dsh-kernel.log`; failure dialog offers retry, open log folder, or quit |
 | Windows 10 compatibility | PE subsystem version `10.0`, same as upstream 0.3.8 |
 
 ---

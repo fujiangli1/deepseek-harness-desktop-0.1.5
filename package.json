@@ -1,6 +1,6 @@
 {
     "name":  "deepseek-harness-desktop",
-    "version":  "0.3.8-dsh0.1.5rc2",
+    "version":  "0.3.8-dsh0.1.5rc2.1",
     "description":  "An unofficial desktop wrapper for DeepSeek Harness.",
     "type":  "module",
     "main":  "src/main.js",
